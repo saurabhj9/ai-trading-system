@@ -1,21 +1,22 @@
 """
 Integration tests for the Orchestrator.
 """
-from datetime import datetime
+from datetime import datetime, timedelta
 from unittest.mock import MagicMock
 
 import pytest
 
-from src.agents.data_structures import AgentConfig, MarketData
+from src.agents.data_structures import AgentConfig
 from src.agents.technical import TechnicalAnalysisAgent
-from src.communication.orchestrator import Orchestrator, AgentState
+from src.communication.orchestrator import Orchestrator
+from src.data.pipeline import DataPipeline
+from src.data.providers.yfinance_provider import YFinanceProvider
 
 
 @pytest.fixture
 def technical_agent():
     """Provides a TechnicalAnalysisAgent with mock dependencies."""
     config = AgentConfig(name="TestTechnicalAgent")
-    # For this integration test, we don't need real clients/buses
     return TechnicalAnalysisAgent(
         config=config,
         llm_client=MagicMock(),
@@ -23,38 +24,37 @@ def technical_agent():
         state_manager=MagicMock(),
     )
 
+@pytest.fixture
+def data_pipeline():
+    """Provides a DataPipeline instance with a real YFinanceProvider."""
+    provider = YFinanceProvider()
+    # No cache for this test to ensure we hit the provider
+    return DataPipeline(provider=provider, cache=None)
 
 @pytest.fixture
-def orchestrator(technical_agent):
-    """Provides an Orchestrator instance."""
-    return Orchestrator(technical_agent=technical_agent)
-
-
-@pytest.fixture
-def sample_market_data():
-    """Provides a sample MarketData object."""
-    return MarketData(
-        symbol="AAPL",
-        price=150.0,
-        volume=1000000,
-        timestamp=datetime.now(),
-        ohlc={"open": 149.0, "high": 151.0, "low": 148.0, "close": 150.5},
-        technical_indicators={"RSI": 55.0, "MACD": 0.5},
-    )
+def orchestrator(data_pipeline, technical_agent):
+    """Provides an Orchestrator instance with a real pipeline and a mock agent."""
+    return Orchestrator(data_pipeline=data_pipeline, technical_agent=technical_agent)
 
 
 @pytest.mark.asyncio
-async def test_orchestrator_run(orchestrator, sample_market_data):
+async def test_orchestrator_run(orchestrator):
     """
-    Tests the full run of the orchestrator with a technical analysis agent.
+    Tests the full run of the orchestrator, ensuring it fetches data
+    and executes the agent workflow.
     """
+    # Arrange
+    symbol = "MSFT"  # Using a real, reliable ticker
+    end_date = datetime.now()
+    start_date = end_date - timedelta(days=90)
+
     # Act
-    final_state = await orchestrator.run(sample_market_data)
+    final_state = await orchestrator.run(symbol, start_date, end_date)
 
     # Assert
-    assert isinstance(final_state, dict)
+    assert final_state.get("error") is None or final_state.get("error") == ""
     assert "decision" in final_state
     decision = final_state["decision"]
     assert decision.agent_name == "TestTechnicalAgent"
-    assert decision.symbol == "AAPL"
-    assert decision.signal == "HOLD"  # Based on the mock implementation
+    assert decision.symbol == symbol
+    assert decision.signal == "HOLD"  # The placeholder agent returns HOLD

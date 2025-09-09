@@ -19,11 +19,11 @@ This document outlines the high-level roadmap for the development of the AI Trad
 **Goal:** Build a robust data pipeline to feed the agents with market data.
 
 -   **Deliverables:**
-    -   [ ] Implement the data provider interface for `yfinance` and `Alpha Vantage`.
-    -   [ ] Create the data processing pipeline for calculating technical indicators.
-    -   [ ] Implement the multi-level data caching system (in-memory and Redis).
-    -   [ ] Integrate the data pipeline with the agent framework.
-    -   [ ] Write integration tests for the data pipeline.
+    -   [x] Implement the data provider interface for `yfinance` and `Alpha Vantage`.
+    -   [x] Create the data processing pipeline for calculating technical indicators.
+    -   [x] Implement the multi-level data caching system (in-memory and Redis).
+    -   [x] Integrate the data pipeline with the agent framework.
+    -   [x] Write integration tests for the data pipeline.
 
 ## Phase 3: Risk, Portfolio Management & Backtesting
 

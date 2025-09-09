@@ -2,30 +2,25 @@
 
 This document lists the immediate, actionable tasks for the current development phase.
 
-## Phase 2: Data Pipeline & Integration
+## Phase 3: Risk, Portfolio Management & Backtesting
 
-### Milestone 1: Data Provider Interface
+### Milestone 1: Advanced Agent Development
 
--   [ ] Create `src/data/providers/base_provider.py` with an abstract `BaseDataProvider` class.
--   [ ] Implement a `yfinance_provider.py` that inherits from the base provider and fetches data using the `yfinance` library.
--   [ ] Implement an `alpha_vantage_provider.py` that inherits from the base provider.
--   [ ] Add basic error handling and rate limiting to the providers.
+-   [ ] Create `src/agents/risk_manager.py` with a `RiskManagementAgent` class.
+-   [ ] Implement basic risk calculations (e.g., stop-loss levels) in the `RiskManagementAgent`.
+-   [ ] Create `src/agents/portfolio_manager.py` with a `PortfolioManagementAgent` class.
+-   [ ] Implement logic in the `PortfolioManagementAgent` to synthesize decisions from other agents (for now, just the `TechnicalAnalysisAgent`).
+-   [ ] Update the `Orchestrator` to include the new agents in the workflow.
 
-### Milestone 2: Data Processing Pipeline
+### Milestone 2: Backtesting Engine Setup
 
--   [ ] Create `src/data/pipeline.py`.
--   [ ] Implement a `DataPipeline` class that takes a data provider as input.
--   [ ] Add a method to the pipeline to fetch data and calculate a basic set of technical indicators (e.g., RSI, MACD) using `pandas-ta`.
--   [ ] The pipeline should return a `MarketData` object.
+-   [ ] Choose a backtesting library (`backtrader` or `vectorbt`) and add it to the project dependencies.
+-   [ ] Create `src/backtesting/engine.py`.
+-   [ ] Implement a basic backtesting `Strategy` that uses the `Orchestrator` to generate signals.
+-   [ ] Implement a script in `scripts/run_backtest.py` to configure and run the backtesting engine with the strategy.
 
-### Milestone 3: Caching Layer
+### Milestone 3: Initial Backtest & Reporting
 
--   [ ] Create `src/data/cache.py`.
--   [ ] Implement a `CacheManager` with methods for saving and retrieving data.
--   [ ] For now, the cache can be a simple in-memory dictionary.
--   [ ] Integrate the cache into the `DataPipeline` to avoid redundant data fetching.
-
-### Milestone 4: Integration
-
--   [ ] Update the `Orchestrator` to use the `DataPipeline` to fetch data before running the agents.
--   [ ] Create a new integration test in `tests/integration/test_data_pipeline.py` to verify the end-to-end data flow.
+-   [ ] Run an initial backtest using the implemented strategy.
+-   [ ] Create `src/backtesting/reports.py` to generate basic performance metrics (e.g., Total Return, Sharpe Ratio).
+-   [ ] Ensure the backtest script outputs a simple performance report.
