@@ -9,7 +9,7 @@ This document outlines the high-level roadmap for the development of the AI Trad
 -   **Deliverables:**
     -   [x] Implement the `BaseAgent` class and core data structures (`AgentConfig`, `MarketData`, `AgentDecision`).
     -   [x] Develop the initial version of the **Technical Analysis Agent**.
-    -   [ ] Develop the initial version of the **Sentiment Analysis Agent**.
+    -   [x] Develop the initial version of the **Sentiment Analysis Agent** (currently uses mock data for sentiment analysis).
     -   [x] Set up the **LangGraph** orchestration to manage a simple, sequential workflow between the agents.
     -   [x] Implement the basic **State Manager** for sharing state between agents.
     -   [x] Create unit tests for all new components.
@@ -30,11 +30,13 @@ This document outlines the high-level roadmap for the development of the AI Trad
 **Goal:** Add advanced decision-making and performance evaluation capabilities.
 
 -   **Deliverables:**
-    -   [ ] Develop the **Risk Management Agent**.
-    -   [ ] Develop the **Portfolio Management Agent** to synthesize agent inputs and make trade decisions.
-    -   [ ] Set up the **Backtesting Engine** using `backtrader` or `vectorbt`.
-    -   [ ] Create a simplified, deterministic version of the agent workflow for fast and repeatable backtests.
-    -   [ ] Generate initial backtest reports and performance metrics.
+    -   [x] Develop the **Risk Management Agent**.
+    -   [x] Develop the **Portfolio Management Agent** to synthesize agent inputs and make trade decisions.
+    -   [x] Set up the **Backtesting Engine** using `backtrader` or `vectorbt`.
+    -   [x] Create a simplified, deterministic version of the agent workflow for fast and repeatable backtests.
+    -   [x] Generate initial backtest reports and performance metrics.
+
+    **Note on Mock Data:** The Sentiment, Risk, and Portfolio Management Agents currently return mock decisions for development purposes. These must be replaced with real analysis logic before paper trading or live deployment. The backtesting uses deterministic, rule-based versions of the agents for speed, but the live system will use the full LLM-based agents.
 
 ## Phase 4: API & Deployment
 

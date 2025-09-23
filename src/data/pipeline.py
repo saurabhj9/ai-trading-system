@@ -15,42 +15,6 @@ from src.data.providers.base_provider import BaseDataProvider
 class DataPipeline:
     """
     Orchestrates fetching, processing, and caching market data.
-
-    This class uses a specified data provider to fetch raw market data,
-    enriches it with technical indicators, and uses a cache to avoid
-    redundant requests and processing.
-    """
-
-    def __init__(self, provider: BaseDataProvider, cache: Optional[CacheManager] = None, cache_ttl_seconds: int = 300):
-        """
-        Initializes the pipeline with a data provider and an optional cache.
-
-        Args:
-            provider: The data provider to use for fetching data.
-            cache: The cache manager to use for storing results.
-            cache_ttl_seconds: The TTL for cached items in seconds.
-        """
-        self.provider = provider
-        self.cache = cache
-        self.cache_ttl_seconds = cache_ttl_seconds
-
-    """
-Data pipeline for fetching, processing, and enriching market data.
-"""
-from datetime import datetime
-from typing import Optional
-
-import pandas as pd
-import pandas_ta as ta
-
-from src.agents.data_structures import MarketData
-from src.data.cache import CacheManager
-from src.data.providers.base_provider import BaseDataProvider
-
-
-class DataPipeline:
-    """
-    Orchestrates fetching, processing, and caching market data.
     """
 
     def __init__(self, provider: BaseDataProvider, cache: Optional[CacheManager] = None, cache_ttl_seconds: int = 300):
