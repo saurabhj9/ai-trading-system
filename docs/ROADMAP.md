@@ -43,17 +43,26 @@ This document outlines the high-level roadmap for the development of the AI Trad
 **Goal:** Expose the system's functionality via an API and prepare for deployment.
 
 -   **Deliverables:**
-    -   [ ] Develop a **FastAPI** application to expose trade signals and system status.
-    -   [ ] Create `Dockerfile` and `docker-compose.yml` for all services.
-    -   [ ] Implement a production deployment script.
-    -   [ ] Set up structured logging and basic monitoring.
+    -   [x] Develop a **FastAPI** application to expose trade signals and system status.
+    -   [x] Create `Dockerfile` and `docker-compose.yml` for all services.
+    -   [x] Implement a production deployment script.
+    -   [x] Set up structured logging and basic monitoring.
 
 ## Phase 5: Refinement & Optimization
 
-**Goal:** Improve the performance, intelligence, and reliability of the system.
+**Goal:** Improve the performance, intelligence, and reliability of the system by replacing mock implementations with production-ready logic and externalizing configurations.
 
 -   **Deliverables:**
-    -   [ ] Optimize the data pipeline and agent processing for speed.
-    -   [ ] Enhance the intelligence of the agents with more sophisticated analysis techniques.
-    -   [ ] Conduct extensive backtesting and parameter tuning.
-    -   [ ] Improve monitoring and alerting.
+    -   [ ] **Agent Logic Implementation:**
+        -   [ ] Implement robust LLM response parsing for all agents (`Technical`, `Sentiment`, `Risk`, `Portfolio`).
+        -   [ ] Replace mock `AgentDecision` returns with logic derived from LLM analysis.
+        -   [ ] Integrate a real-time news API for the `SentimentAnalysisAgent`, replacing the current mock news data.
+    -   [ ] **Configuration Management:**
+        -   [ ] Externalize hardcoded configurations (e.g., LLM provider URL, model names) into `.env` files or a dedicated config module.
+        -   [ ] Make the default portfolio starting cash configurable.
+        -   [ ] Secure the FastAPI CORS policy by replacing `allow_origins=["*"]` with a specific production domain.
+    -   [ ] **Optimization & Tuning:**
+        -   [ ] Optimize the data pipeline and agent processing for speed.
+        -   [ ] Conduct extensive backtesting with full agent logic and perform parameter tuning.
+    -   [ ] **Monitoring & Reliability:**
+        -   [ ] Enhance system monitoring with more detailed metrics and alerting.

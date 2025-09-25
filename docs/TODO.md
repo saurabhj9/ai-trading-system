@@ -34,9 +34,54 @@ All Phase 3 deliverables have been implemented:
 - **PortfolioManagementAgent**: Follows technical signals. Enhance to consider all agents and portfolio state.
 - **Backtesting**: Uses deterministic agents for speed. For accurate backtests, integrate full agents (but this will be slower).
 
-## Next Phase: Phase 4 - API & Deployment
+## Phase 4: API & Deployment - COMPLETED
 
-- Develop FastAPI application for trade signals and system status.
-- Create Dockerfile and docker-compose.yml.
-- Implement production deployment.
-- Set up logging and monitoring.
+All Phase 4 deliverables have been implemented:
+
+### Milestone 1: FastAPI Application Development - COMPLETED
+
+-   [x] Create `src/api/app.py` with FastAPI application setup.
+-   [x] Implement `src/api/routes/signals.py` for trade signal generation endpoint.
+-   [x] Implement `src/api/routes/status.py` for system status and health checks.
+-   [x] Implement `src/api/routes/monitoring.py` for metrics and monitoring.
+-   [x] Set up proper dependency injection for agents with LLM client, message bus, and state manager.
+
+### Milestone 2: Containerization & Orchestration - COMPLETED
+
+-   [x] Create `Dockerfile` for the main application container.
+-   [x] Create `docker-compose.yml` for multi-service orchestration (app, Redis, PostgreSQL).
+-   [x] Configure environment variables and service dependencies.
+
+### Milestone 3: Production Deployment - COMPLETED
+
+-   [x] Implement `scripts/deploy.sh` for automated production deployment.
+-   [x] Set up structured logging with structlog and JSON output.
+-   [x] Implement basic monitoring with request metrics and health checks.
+
+## Next Phase: Phase 5 - Refinement & Optimization
+
+This phase focuses on replacing mock implementations with production-ready logic, externalizing configurations, and enhancing overall system performance and reliability.
+
+### Milestone 1: Implement Core Agent Logic
+
+-   [ ] **LLM Response Parsing:** Implement robust parsing logic in all agents (`Technical`, `Sentiment`, `Risk`, `Portfolio`) to replace mock `AgentDecision` returns with analysis derived from the LLM.
+-   [ ] **Sentiment Analysis Agent:** Integrate a live news data provider (e.g., NewsAPI, Alpha Vantage News) to replace the current `mock_news` list.
+-   [ ] **Risk Management Agent:** Implement actual risk calculations (e.g., position sizing, Value at Risk) instead of the mock "APPROVE" signal.
+
+### Milestone 2: Externalize Configurations
+
+-   [ ] **Centralize Settings:** Move hardcoded values from the codebase into a structured configuration system (e.g., `.env` files with a `config.py` loader).
+    -   [ ] LLM provider URL and model names (`src/llm/client.py`, `src/agents/data_structures.py`).
+    -   [ ] Default portfolio starting cash (`src/communication/orchestrator.py`).
+-   [ ] **Secure API:** Update the FastAPI CORS policy in `src/api/app.py` to use a specific list of allowed origins instead of `["*"]`.
+
+### Milestone 3: Optimization and Tuning
+
+-   [ ] **Performance Analysis:** Profile the data pipeline and agent processing to identify and address bottlenecks.
+-   [ ] **Backtesting:** Conduct comprehensive backtesting cycles using the full, LLM-driven agent logic to evaluate strategy performance.
+-   [ ] **Parameter Tuning:** Tune agent parameters and strategy rules based on backtesting results.
+
+### Milestone 4: Enhance Monitoring
+
+-   [ ] **Add Alerts:** Implement an alerting mechanism for critical system events (e.g., repeated API failures, large drawdown).
+-   [ ] **Expand Metrics:** Add more granular metrics for agent performance, LLM response times, and data pipeline throughput.

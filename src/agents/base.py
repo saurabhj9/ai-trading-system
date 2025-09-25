@@ -84,9 +84,8 @@ class BaseAgent(ABC):
         Returns:
             The textual response from the language model.
         """
-        # TODO: Implement the actual LLM call with retry logic and error handling.
-        print(f"--- LLM Call for {self.config.name} ---")
-        print(f"System Prompt: {self.get_system_prompt()}")
-        print(f"User Prompt: {user_prompt}")
-        print("------------------------------------")
-        return "This is a placeholder response from the LLM."
+        return await self.llm_client.generate(
+            model=self.config.model_name,
+            prompt=user_prompt,
+            system_prompt=self.get_system_prompt(),
+        )
