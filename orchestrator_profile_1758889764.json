@@ -1,0 +1,182 @@
+{
+  "timestamp": "2025-09-26T13:28:39.154755",
+  "benchmark_start": 1758889719.1547585,
+  "tests": {
+    "orchestrator_runs": {
+      "AAPL": {
+        "symbol": "AAPL",
+        "iterations": 2,
+        "successful_runs": 2,
+        "success_rate": 1.0,
+        "avg_total_time": 6.7200576066970825,
+        "results": [
+          {
+            "iteration": 0,
+            "success": true,
+            "total_time": 7.444046497344971,
+            "final_decision": "HOLD",
+            "error": ""
+          },
+          {
+            "iteration": 1,
+            "success": true,
+            "total_time": 5.996068716049194,
+            "final_decision": "HOLD",
+            "error": ""
+          }
+        ]
+      },
+      "GOOGL": {
+        "symbol": "GOOGL",
+        "iterations": 2,
+        "successful_runs": 2,
+        "success_rate": 1.0,
+        "avg_total_time": 5.962876200675964,
+        "results": [
+          {
+            "iteration": 0,
+            "success": true,
+            "total_time": 6.3836350440979,
+            "final_decision": "HOLD",
+            "error": ""
+          },
+          {
+            "iteration": 1,
+            "success": true,
+            "total_time": 5.542117357254028,
+            "final_decision": "HOLD",
+            "error": ""
+          }
+        ]
+      },
+      "MSFT": {
+        "symbol": "MSFT",
+        "iterations": 2,
+        "successful_runs": 2,
+        "success_rate": 1.0,
+        "avg_total_time": 4.946187734603882,
+        "results": [
+          {
+            "iteration": 0,
+            "success": true,
+            "total_time": 4.84147310256958,
+            "final_decision": "HOLD",
+            "error": ""
+          },
+          {
+            "iteration": 1,
+            "success": true,
+            "total_time": 5.050902366638184,
+            "final_decision": "HOLD",
+            "error": ""
+          }
+        ]
+      }
+    },
+    "parallel_vs_sequential": {
+      "sequential": {
+        "total_time": 1.948570966720581,
+        "technical_decision": "HOLD",
+        "sentiment_decision": "ERROR"
+      },
+      "parallel": {
+        "total_time": 1.7078917026519775,
+        "technical_decision": "HOLD",
+        "sentiment_decision": "ERROR",
+        "speedup": 1.140921853355738
+      }
+    },
+    "state_management": {
+      "workflow_completed": true,
+      "state_operations": {
+        "state_management_profile": {
+          "count": 1,
+          "successful_count": 1,
+          "success_rate": 1.0,
+          "avg_duration": 6.25579833984375,
+          "min_duration": 6.25579833984375,
+          "max_duration": 6.25579833984375,
+          "total_duration": 6.25579833984375
+        }
+      },
+      "total_state_time": 6.25579833984375
+    }
+  },
+  "performance_summary": {
+    "orchestrator_run_iter_0": {
+      "count": 3,
+      "successful_count": 3,
+      "success_rate": 1.0,
+      "avg_duration": 6.223062753677368,
+      "min_duration": 4.841482162475586,
+      "max_duration": 7.444059133529663,
+      "total_duration": 18.669188261032104
+    },
+    "orchestrator_run_iter_1": {
+      "count": 3,
+      "successful_count": 3,
+      "success_rate": 1.0,
+      "avg_duration": 5.529719193776448,
+      "min_duration": 5.050922632217407,
+      "max_duration": 5.996086359024048,
+      "total_duration": 16.589157581329346
+    },
+    "orchestrator_benchmark": {
+      "count": 3,
+      "successful_count": 3,
+      "success_rate": 1.0,
+      "avg_duration": 11.753373463948568,
+      "min_duration": 9.892954111099243,
+      "max_duration": 13.440576314926147,
+      "total_duration": 35.2601203918457
+    },
+    "seq_technical": {
+      "count": 1,
+      "successful_count": 1,
+      "success_rate": 1.0,
+      "avg_duration": 1.9483494758605957,
+      "min_duration": 1.9483494758605957,
+      "max_duration": 1.9483494758605957,
+      "total_duration": 1.9483494758605957
+    },
+    "seq_sentiment": {
+      "count": 1,
+      "successful_count": 1,
+      "success_rate": 1.0,
+      "avg_duration": 9.059906005859375e-06,
+      "min_duration": 9.059906005859375e-06,
+      "max_duration": 9.059906005859375e-06,
+      "total_duration": 9.059906005859375e-06
+    },
+    "sequential_execution": {
+      "count": 1,
+      "successful_count": 1,
+      "success_rate": 1.0,
+      "avg_duration": 1.948577880859375,
+      "min_duration": 1.948577880859375,
+      "max_duration": 1.948577880859375,
+      "total_duration": 1.948577880859375
+    },
+    "parallel_execution": {
+      "count": 1,
+      "successful_count": 1,
+      "success_rate": 1.0,
+      "avg_duration": 1.7078969478607178,
+      "min_duration": 1.7078969478607178,
+      "max_duration": 1.7078969478607178,
+      "total_duration": 1.7078969478607178
+    },
+    "state_management_profile": {
+      "count": 1,
+      "successful_count": 1,
+      "success_rate": 1.0,
+      "avg_duration": 6.25579833984375,
+      "min_duration": 6.25579833984375,
+      "max_duration": 6.25579833984375,
+      "total_duration": 6.25579833984375
+    }
+  },
+  "benchmark_end": 1758889764.9782917,
+  "total_duration": 45.82353329658508,
+  "status": "completed"
+}

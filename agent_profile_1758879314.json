@@ -1,0 +1,198 @@
+{
+  "timestamp": "2025-09-26T10:34:50.291280",
+  "benchmark_start": 1758879290.2912831,
+  "tests": {
+    "individual_agents": {
+      "technical": {
+        "agent_name": "technical",
+        "iterations": 3,
+        "successful_runs": 3,
+        "success_rate": 1.0,
+        "avg_confidence": 0.4333333333333333,
+        "avg_reasoning_length": 688.0,
+        "results": [
+          {
+            "iteration": 0,
+            "success": true,
+            "signal": "HOLD",
+            "confidence": 0.6,
+            "reasoning_length": 646
+          },
+          {
+            "iteration": 1,
+            "success": true,
+            "signal": "HOLD",
+            "confidence": 0.7,
+            "reasoning_length": 477
+          },
+          {
+            "iteration": 2,
+            "success": true,
+            "signal": "ERROR",
+            "confidence": 0.0,
+            "reasoning_length": 941
+          }
+        ]
+      },
+      "sentiment": {
+        "agent_name": "sentiment",
+        "iterations": 3,
+        "successful_runs": 3,
+        "success_rate": 1.0,
+        "avg_confidence": 0.0,
+        "avg_reasoning_length": 32.0,
+        "results": [
+          {
+            "iteration": 0,
+            "success": true,
+            "signal": "ERROR",
+            "confidence": 0.0,
+            "reasoning_length": 32
+          },
+          {
+            "iteration": 1,
+            "success": true,
+            "signal": "ERROR",
+            "confidence": 0.0,
+            "reasoning_length": 32
+          },
+          {
+            "iteration": 2,
+            "success": true,
+            "signal": "ERROR",
+            "confidence": 0.0,
+            "reasoning_length": 32
+          }
+        ]
+      },
+      "risk": {
+        "agent_name": "risk",
+        "iterations": 3,
+        "successful_runs": 0,
+        "success_rate": 0.0,
+        "avg_confidence": 0,
+        "avg_reasoning_length": 0,
+        "results": [
+          {
+            "iteration": 0,
+            "success": false,
+            "error": "RiskManagementAgent.analyze() missing 2 required positional arguments: 'proposed_decisions' and 'portfolio_state'"
+          },
+          {
+            "iteration": 1,
+            "success": false,
+            "error": "RiskManagementAgent.analyze() missing 2 required positional arguments: 'proposed_decisions' and 'portfolio_state'"
+          },
+          {
+            "iteration": 2,
+            "success": false,
+            "error": "RiskManagementAgent.analyze() missing 2 required positional arguments: 'proposed_decisions' and 'portfolio_state'"
+          }
+        ]
+      },
+      "portfolio": {
+        "agent_name": "portfolio",
+        "iterations": 3,
+        "successful_runs": 0,
+        "success_rate": 0.0,
+        "avg_confidence": 0,
+        "avg_reasoning_length": 0,
+        "results": [
+          {
+            "iteration": 0,
+            "success": false,
+            "error": "PortfolioManagementAgent.analyze() missing 2 required positional arguments: 'agent_decisions' and 'portfolio_state'"
+          },
+          {
+            "iteration": 1,
+            "success": false,
+            "error": "PortfolioManagementAgent.analyze() missing 2 required positional arguments: 'agent_decisions' and 'portfolio_state'"
+          },
+          {
+            "iteration": 2,
+            "success": false,
+            "error": "PortfolioManagementAgent.analyze() missing 2 required positional arguments: 'agent_decisions' and 'portfolio_state'"
+          }
+        ]
+      }
+    },
+    "different_symbols": {
+      "AAPL": {
+        "agent_name": "technical_AAPL",
+        "iterations": 2,
+        "successful_runs": 2,
+        "success_rate": 1.0,
+        "avg_confidence": 0.35,
+        "avg_reasoning_length": 749.0,
+        "results": [
+          {
+            "iteration": 0,
+            "success": true,
+            "signal": "ERROR",
+            "confidence": 0.0,
+            "reasoning_length": 937
+          },
+          {
+            "iteration": 1,
+            "success": true,
+            "signal": "HOLD",
+            "confidence": 0.7,
+            "reasoning_length": 561
+          }
+        ]
+      },
+      "GOOGL": {
+        "agent_name": "technical_GOOGL",
+        "iterations": 2,
+        "successful_runs": 2,
+        "success_rate": 1.0,
+        "avg_confidence": 0.35,
+        "avg_reasoning_length": 802.0,
+        "results": [
+          {
+            "iteration": 0,
+            "success": true,
+            "signal": "HOLD",
+            "confidence": 0.7,
+            "reasoning_length": 517
+          },
+          {
+            "iteration": 1,
+            "success": true,
+            "signal": "ERROR",
+            "confidence": 0.0,
+            "reasoning_length": 1087
+          }
+        ]
+      },
+      "MSFT": {
+        "agent_name": "technical_MSFT",
+        "iterations": 2,
+        "successful_runs": 2,
+        "success_rate": 1.0,
+        "avg_confidence": 0.6499999999999999,
+        "avg_reasoning_length": 595.5,
+        "results": [
+          {
+            "iteration": 0,
+            "success": true,
+            "signal": "HOLD",
+            "confidence": 0.6,
+            "reasoning_length": 586
+          },
+          {
+            "iteration": 1,
+            "success": true,
+            "signal": "HOLD",
+            "confidence": 0.7,
+            "reasoning_length": 605
+          }
+        ]
+      }
+    }
+  },
+  "status": "failed",
+  "error": "'AgentDecision' object has no attribute 'model_dump'",
+  "benchmark_end": 1758879314.164812,
+  "total_duration": 23.873528957366943
+}

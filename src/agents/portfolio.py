@@ -32,12 +32,14 @@ class PortfolioManagementAgent(BaseAgent):
     async def analyze(
         self,
         market_data: MarketData,
-        agent_decisions: Dict[str, AgentDecision],
-        portfolio_state: Dict[str, Any],
+        **kwargs
     ) -> AgentDecision:
         """
         Makes the final portfolio management decision by synthesizing agent inputs.
         """
+        agent_decisions = kwargs.get("agent_decisions", {})
+        portfolio_state = kwargs.get("portfolio_state", {})
+
         # Format the agent decisions and portfolio state into a user prompt.
         decisions_summary = {
             name: {"signal": dec.signal, "confidence": dec.confidence}
@@ -76,7 +78,7 @@ class PortfolioManagementAgent(BaseAgent):
             supporting_data={
                 "llm_response": llm_response,
                 "agent_decisions": {
-                    k: v.model_dump() for k, v in agent_decisions.items()
+                    k: v.__dict__ for k, v in agent_decisions.items()
                 },
                 "portfolio_state": portfolio_state,
             },

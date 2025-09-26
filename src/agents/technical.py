@@ -28,7 +28,7 @@ class TechnicalAnalysisAgent(BaseAgent):
             "'signal', 'confidence', and 'reasoning'."
         )
 
-    async def analyze(self, market_data: MarketData) -> AgentDecision:
+    async def analyze(self, market_data: MarketData, **kwargs) -> AgentDecision:
         """
         Performs technical analysis on the given market data using an LLM.
         """

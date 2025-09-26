@@ -54,8 +54,9 @@ class Orchestrator:
         workflow.add_node("sentiment_analysis", self.run_sentiment_analysis)
         workflow.add_node("risk_management", self.run_risk_management)
         workflow.add_node("portfolio_management", self.run_portfolio_management)
-        workflow.set_entry_point("technical_analysis")
-        workflow.add_edge("technical_analysis", "sentiment_analysis")
+        # Run technical and sentiment in parallel since they are independent
+        workflow.set_entry_point(["technical_analysis", "sentiment_analysis"])
+        workflow.add_edge("technical_analysis", "risk_management")
         workflow.add_edge("sentiment_analysis", "risk_management")
         workflow.add_edge("risk_management", "portfolio_management")
         workflow.add_edge("portfolio_management", END)

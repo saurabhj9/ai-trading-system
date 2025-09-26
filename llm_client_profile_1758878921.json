@@ -1,0 +1,319 @@
+{
+  "timestamp": "2025-09-26T10:28:10.835952",
+  "benchmark_start": 1758878890.8359869,
+  "tests": {
+    "response_times": {
+      "iterations": 5,
+      "successful_runs": 5,
+      "success_rate": 1.0,
+      "avg_response_length": 1233.2,
+      "avg_prompt_tokens": 23.0,
+      "avg_completion_tokens": 254.0,
+      "avg_total_tokens": 277.0,
+      "results": [
+        {
+          "iteration": 0,
+          "success": true,
+          "response_length": 1339,
+          "prompt_length": 59,
+          "usage": {
+            "prompt_tokens": 23,
+            "completion_tokens": 269,
+            "total_tokens": 292
+          }
+        },
+        {
+          "iteration": 1,
+          "success": true,
+          "response_length": 1267,
+          "prompt_length": 59,
+          "usage": {
+            "prompt_tokens": 23,
+            "completion_tokens": 257,
+            "total_tokens": 280
+          }
+        },
+        {
+          "iteration": 2,
+          "success": true,
+          "response_length": 1138,
+          "prompt_length": 59,
+          "usage": {
+            "prompt_tokens": 23,
+            "completion_tokens": 242,
+            "total_tokens": 265
+          }
+        },
+        {
+          "iteration": 3,
+          "success": true,
+          "response_length": 1242,
+          "prompt_length": 59,
+          "usage": {
+            "prompt_tokens": 23,
+            "completion_tokens": 257,
+            "total_tokens": 280
+          }
+        },
+        {
+          "iteration": 4,
+          "success": true,
+          "response_length": 1180,
+          "prompt_length": 59,
+          "usage": {
+            "prompt_tokens": 23,
+            "completion_tokens": 245,
+            "total_tokens": 268
+          }
+        }
+      ]
+    },
+    "prompt_sizes": {
+      "size_100": {
+        "iterations": 2,
+        "successful_runs": 2,
+        "success_rate": 1.0,
+        "avg_response_length": 424.5,
+        "avg_prompt_tokens": 38.0,
+        "avg_completion_tokens": 99.0,
+        "avg_total_tokens": 137.0,
+        "results": [
+          {
+            "iteration": 0,
+            "success": true,
+            "response_length": 413,
+            "prompt_length": 83,
+            "usage": {
+              "prompt_tokens": 38,
+              "completion_tokens": 95,
+              "total_tokens": 133
+            }
+          },
+          {
+            "iteration": 1,
+            "success": true,
+            "response_length": 436,
+            "prompt_length": 83,
+            "usage": {
+              "prompt_tokens": 38,
+              "completion_tokens": 103,
+              "total_tokens": 141
+            }
+          }
+        ]
+      },
+      "size_500": {
+        "iterations": 2,
+        "successful_runs": 2,
+        "success_rate": 1.0,
+        "avg_response_length": 441.0,
+        "avg_prompt_tokens": 171.0,
+        "avg_completion_tokens": 92.5,
+        "avg_total_tokens": 263.5,
+        "results": [
+          {
+            "iteration": 0,
+            "success": true,
+            "response_length": 482,
+            "prompt_length": 483,
+            "usage": {
+              "prompt_tokens": 171,
+              "completion_tokens": 102,
+              "total_tokens": 273
+            }
+          },
+          {
+            "iteration": 1,
+            "success": true,
+            "response_length": 400,
+            "prompt_length": 483,
+            "usage": {
+              "prompt_tokens": 171,
+              "completion_tokens": 83,
+              "total_tokens": 254
+            }
+          }
+        ]
+      },
+      "size_1000": {
+        "iterations": 2,
+        "successful_runs": 2,
+        "success_rate": 1.0,
+        "avg_response_length": 428.0,
+        "avg_prompt_tokens": 338.0,
+        "avg_completion_tokens": 89.0,
+        "avg_total_tokens": 427.0,
+        "results": [
+          {
+            "iteration": 0,
+            "success": true,
+            "response_length": 453,
+            "prompt_length": 983,
+            "usage": {
+              "prompt_tokens": 338,
+              "completion_tokens": 93,
+              "total_tokens": 431
+            }
+          },
+          {
+            "iteration": 1,
+            "success": true,
+            "response_length": 403,
+            "prompt_length": 983,
+            "usage": {
+              "prompt_tokens": 338,
+              "completion_tokens": 85,
+              "total_tokens": 423
+            }
+          }
+        ]
+      },
+      "size_2000": {
+        "iterations": 2,
+        "successful_runs": 2,
+        "success_rate": 1.0,
+        "avg_response_length": 389.5,
+        "avg_prompt_tokens": 671.0,
+        "avg_completion_tokens": 81.0,
+        "avg_total_tokens": 752.0,
+        "results": [
+          {
+            "iteration": 0,
+            "success": true,
+            "response_length": 309,
+            "prompt_length": 1983,
+            "usage": {
+              "prompt_tokens": 671,
+              "completion_tokens": 69,
+              "total_tokens": 740
+            }
+          },
+          {
+            "iteration": 1,
+            "success": true,
+            "response_length": 470,
+            "prompt_length": 1983,
+            "usage": {
+              "prompt_tokens": 671,
+              "completion_tokens": 93,
+              "total_tokens": 764
+            }
+          }
+        ]
+      }
+    },
+    "models": {
+      "anthropic/claude-3-haiku": {
+        "iterations": 3,
+        "successful_runs": 3,
+        "success_rate": 1.0,
+        "avg_response_length": 1626.0,
+        "avg_prompt_tokens": 32.0,
+        "avg_completion_tokens": 355.6666666666667,
+        "avg_total_tokens": 387.6666666666667,
+        "results": [
+          {
+            "iteration": 0,
+            "success": true,
+            "response_length": 1920,
+            "prompt_length": 73,
+            "usage": {
+              "prompt_tokens": 32,
+              "completion_tokens": 407,
+              "total_tokens": 439
+            }
+          },
+          {
+            "iteration": 1,
+            "success": true,
+            "response_length": 1406,
+            "prompt_length": 73,
+            "usage": {
+              "prompt_tokens": 32,
+              "completion_tokens": 322,
+              "total_tokens": 354
+            }
+          },
+          {
+            "iteration": 2,
+            "success": true,
+            "response_length": 1552,
+            "prompt_length": 73,
+            "usage": {
+              "prompt_tokens": 32,
+              "completion_tokens": 338,
+              "total_tokens": 370
+            }
+          }
+        ]
+      }
+    },
+    "error_handling": {
+      "invalid_model_test": {
+        "success": false,
+        "error": "Error code: 400 - {'error': {'message': 'invalid-model-name is not a valid model ID', 'code': 400}, 'user_id': 'user_2z5GPG0sPQjGb82YHjYpbHFopZ3'}",
+        "error_type": "BadRequestError",
+        "duration": 0.07799720764160156
+      }
+    }
+  },
+  "performance_summary": {
+    "llm_call_anthropic/claude-3-haiku_iter_0": {
+      "count": 6,
+      "successful_count": 6,
+      "success_rate": 1.0,
+      "avg_duration": 1.895676573117574,
+      "min_duration": 0.9189395904541016,
+      "max_duration": 3.500920534133911,
+      "total_duration": 11.374059438705444
+    },
+    "llm_call_anthropic/claude-3-haiku_iter_1": {
+      "count": 6,
+      "successful_count": 6,
+      "success_rate": 1.0,
+      "avg_duration": 1.633127490679423,
+      "min_duration": 0.9723572731018066,
+      "max_duration": 2.772282838821411,
+      "total_duration": 9.798764944076538
+    },
+    "llm_call_anthropic/claude-3-haiku_iter_2": {
+      "count": 2,
+      "successful_count": 2,
+      "success_rate": 1.0,
+      "avg_duration": 2.5304670333862305,
+      "min_duration": 2.2191550731658936,
+      "max_duration": 2.8417789936065674,
+      "total_duration": 5.060934066772461
+    },
+    "llm_call_anthropic/claude-3-haiku_iter_3": {
+      "count": 1,
+      "successful_count": 1,
+      "success_rate": 1.0,
+      "avg_duration": 2.1940646171569824,
+      "min_duration": 2.1940646171569824,
+      "max_duration": 2.1940646171569824,
+      "total_duration": 2.1940646171569824
+    },
+    "llm_call_anthropic/claude-3-haiku_iter_4": {
+      "count": 1,
+      "successful_count": 1,
+      "success_rate": 1.0,
+      "avg_duration": 2.136366605758667,
+      "min_duration": 2.136366605758667,
+      "max_duration": 2.136366605758667,
+      "total_duration": 2.136366605758667
+    },
+    "llm_call_anthropic/claude-3-haiku": {
+      "count": 6,
+      "successful_count": 6,
+      "success_rate": 1.0,
+      "avg_duration": 5.095273733139038,
+      "min_duration": 2.0553133487701416,
+      "max_duration": 12.36132287979126,
+      "total_duration": 30.57164239883423
+    }
+  },
+  "benchmark_end": 1758878921.4874952,
+  "total_duration": 30.651508331298828,
+  "status": "completed"
+}

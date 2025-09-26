@@ -1,0 +1,427 @@
+{
+  "timestamp": "2025-09-26T17:32:32.718978",
+  "benchmark_start": 1758904352.7189825,
+  "tests": {
+    "individual_agents": {
+      "technical": {
+        "agent_name": "technical",
+        "iterations": 3,
+        "successful_runs": 3,
+        "success_rate": 1.0,
+        "avg_confidence": 0.6999999999999998,
+        "avg_reasoning_length": 604.0,
+        "results": [
+          {
+            "iteration": 0,
+            "success": true,
+            "signal": "HOLD",
+            "confidence": 0.7,
+            "reasoning_length": 604
+          },
+          {
+            "iteration": 1,
+            "success": true,
+            "signal": "HOLD",
+            "confidence": 0.7,
+            "reasoning_length": 604
+          },
+          {
+            "iteration": 2,
+            "success": true,
+            "signal": "HOLD",
+            "confidence": 0.7,
+            "reasoning_length": 604
+          }
+        ]
+      },
+      "sentiment": {
+        "agent_name": "sentiment",
+        "iterations": 3,
+        "successful_runs": 3,
+        "success_rate": 1.0,
+        "avg_confidence": 0.9,
+        "avg_reasoning_length": 383.0,
+        "results": [
+          {
+            "iteration": 0,
+            "success": true,
+            "signal": "BULLISH",
+            "confidence": 0.9,
+            "reasoning_length": 383
+          },
+          {
+            "iteration": 1,
+            "success": true,
+            "signal": "BULLISH",
+            "confidence": 0.9,
+            "reasoning_length": 383
+          },
+          {
+            "iteration": 2,
+            "success": true,
+            "signal": "BULLISH",
+            "confidence": 0.9,
+            "reasoning_length": 383
+          }
+        ]
+      },
+      "risk": {
+        "agent_name": "risk",
+        "iterations": 3,
+        "successful_runs": 3,
+        "success_rate": 1.0,
+        "avg_confidence": 0.8000000000000002,
+        "avg_reasoning_length": 77.0,
+        "results": [
+          {
+            "iteration": 0,
+            "success": true,
+            "signal": "REJECT",
+            "confidence": 0.8,
+            "reasoning_length": 77
+          },
+          {
+            "iteration": 1,
+            "success": true,
+            "signal": "REJECT",
+            "confidence": 0.8,
+            "reasoning_length": 77
+          },
+          {
+            "iteration": 2,
+            "success": true,
+            "signal": "REJECT",
+            "confidence": 0.8,
+            "reasoning_length": 77
+          }
+        ]
+      },
+      "portfolio": {
+        "agent_name": "portfolio",
+        "iterations": 3,
+        "successful_runs": 3,
+        "success_rate": 1.0,
+        "avg_confidence": 0.6999999999999998,
+        "avg_reasoning_length": 639.0,
+        "results": [
+          {
+            "iteration": 0,
+            "success": true,
+            "signal": "HOLD",
+            "confidence": 0.7,
+            "reasoning_length": 639
+          },
+          {
+            "iteration": 1,
+            "success": true,
+            "signal": "HOLD",
+            "confidence": 0.7,
+            "reasoning_length": 639
+          },
+          {
+            "iteration": 2,
+            "success": true,
+            "signal": "HOLD",
+            "confidence": 0.7,
+            "reasoning_length": 639
+          }
+        ]
+      }
+    },
+    "different_symbols": {
+      "AAPL": {
+        "agent_name": "technical_AAPL",
+        "iterations": 2,
+        "successful_runs": 2,
+        "success_rate": 1.0,
+        "avg_confidence": 0.7,
+        "avg_reasoning_length": 594.0,
+        "results": [
+          {
+            "iteration": 0,
+            "success": true,
+            "signal": "HOLD",
+            "confidence": 0.7,
+            "reasoning_length": 594
+          },
+          {
+            "iteration": 1,
+            "success": true,
+            "signal": "HOLD",
+            "confidence": 0.7,
+            "reasoning_length": 594
+          }
+        ]
+      },
+      "GOOGL": {
+        "agent_name": "technical_GOOGL",
+        "iterations": 2,
+        "successful_runs": 2,
+        "success_rate": 1.0,
+        "avg_confidence": 0.0,
+        "avg_reasoning_length": 901.0,
+        "results": [
+          {
+            "iteration": 0,
+            "success": true,
+            "signal": "ERROR",
+            "confidence": 0.0,
+            "reasoning_length": 901
+          },
+          {
+            "iteration": 1,
+            "success": true,
+            "signal": "ERROR",
+            "confidence": 0.0,
+            "reasoning_length": 901
+          }
+        ]
+      },
+      "MSFT": {
+        "agent_name": "technical_MSFT",
+        "iterations": 2,
+        "successful_runs": 2,
+        "success_rate": 1.0,
+        "avg_confidence": 0.7,
+        "avg_reasoning_length": 629.0,
+        "results": [
+          {
+            "iteration": 0,
+            "success": true,
+            "signal": "HOLD",
+            "confidence": 0.7,
+            "reasoning_length": 629
+          },
+          {
+            "iteration": 1,
+            "success": true,
+            "signal": "HOLD",
+            "confidence": 0.7,
+            "reasoning_length": 629
+          }
+        ]
+      }
+    },
+    "agent_chain": {
+      "chain_completed": true,
+      "decisions": {
+        "technical": "HOLD",
+        "sentiment": "BULLISH",
+        "risk": "REJECT",
+        "portfolio": "BUY"
+      }
+    }
+  },
+  "performance_summary": {
+    "technical_analysis_iter_0": {
+      "count": 1,
+      "successful_count": 1,
+      "success_rate": 1.0,
+      "avg_duration": 2.2351746559143066,
+      "min_duration": 2.2351746559143066,
+      "max_duration": 2.2351746559143066,
+      "total_duration": 2.2351746559143066
+    },
+    "technical_analysis_iter_1": {
+      "count": 1,
+      "successful_count": 1,
+      "success_rate": 1.0,
+      "avg_duration": 0.00012063980102539062,
+      "min_duration": 0.00012063980102539062,
+      "max_duration": 0.00012063980102539062,
+      "total_duration": 0.00012063980102539062
+    },
+    "technical_analysis_iter_2": {
+      "count": 1,
+      "successful_count": 1,
+      "success_rate": 1.0,
+      "avg_duration": 6.771087646484375e-05,
+      "min_duration": 6.771087646484375e-05,
+      "max_duration": 6.771087646484375e-05,
+      "total_duration": 6.771087646484375e-05
+    },
+    "agent_benchmark": {
+      "count": 7,
+      "successful_count": 7,
+      "success_rate": 1.0,
+      "avg_duration": 1.6599786622183663,
+      "min_duration": 1.3024322986602783,
+      "max_duration": 2.2361092567443848,
+      "total_duration": 11.619850635528564
+    },
+    "sentiment_analysis_iter_0": {
+      "count": 1,
+      "successful_count": 1,
+      "success_rate": 1.0,
+      "avg_duration": 1.3019485473632812,
+      "min_duration": 1.3019485473632812,
+      "max_duration": 1.3019485473632812,
+      "total_duration": 1.3019485473632812
+    },
+    "sentiment_analysis_iter_1": {
+      "count": 1,
+      "successful_count": 1,
+      "success_rate": 1.0,
+      "avg_duration": 6.246566772460938e-05,
+      "min_duration": 6.246566772460938e-05,
+      "max_duration": 6.246566772460938e-05,
+      "total_duration": 6.246566772460938e-05
+    },
+    "sentiment_analysis_iter_2": {
+      "count": 1,
+      "successful_count": 1,
+      "success_rate": 1.0,
+      "avg_duration": 3.0517578125e-05,
+      "min_duration": 3.0517578125e-05,
+      "max_duration": 3.0517578125e-05,
+      "total_duration": 3.0517578125e-05
+    },
+    "risk_analysis_iter_0": {
+      "count": 1,
+      "successful_count": 1,
+      "success_rate": 1.0,
+      "avg_duration": 1.4780519008636475,
+      "min_duration": 1.4780519008636475,
+      "max_duration": 1.4780519008636475,
+      "total_duration": 1.4780519008636475
+    },
+    "risk_analysis_iter_1": {
+      "count": 1,
+      "successful_count": 1,
+      "success_rate": 1.0,
+      "avg_duration": 0.00014257431030273438,
+      "min_duration": 0.00014257431030273438,
+      "max_duration": 0.00014257431030273438,
+      "total_duration": 0.00014257431030273438
+    },
+    "risk_analysis_iter_2": {
+      "count": 1,
+      "successful_count": 1,
+      "success_rate": 1.0,
+      "avg_duration": 8.726119995117188e-05,
+      "min_duration": 8.726119995117188e-05,
+      "max_duration": 8.726119995117188e-05,
+      "total_duration": 8.726119995117188e-05
+    },
+    "portfolio_analysis_iter_0": {
+      "count": 1,
+      "successful_count": 1,
+      "success_rate": 1.0,
+      "avg_duration": 1.6109349727630615,
+      "min_duration": 1.6109349727630615,
+      "max_duration": 1.6109349727630615,
+      "total_duration": 1.6109349727630615
+    },
+    "portfolio_analysis_iter_1": {
+      "count": 1,
+      "successful_count": 1,
+      "success_rate": 1.0,
+      "avg_duration": 0.00018334388732910156,
+      "min_duration": 0.00018334388732910156,
+      "max_duration": 0.00018334388732910156,
+      "total_duration": 0.00018334388732910156
+    },
+    "portfolio_analysis_iter_2": {
+      "count": 1,
+      "successful_count": 1,
+      "success_rate": 1.0,
+      "avg_duration": 0.00011849403381347656,
+      "min_duration": 0.00011849403381347656,
+      "max_duration": 0.00011849403381347656,
+      "total_duration": 0.00011849403381347656
+    },
+    "technical_AAPL_analysis_iter_0": {
+      "count": 1,
+      "successful_count": 1,
+      "success_rate": 1.0,
+      "avg_duration": 1.4504241943359375,
+      "min_duration": 1.4504241943359375,
+      "max_duration": 1.4504241943359375,
+      "total_duration": 1.4504241943359375
+    },
+    "technical_AAPL_analysis_iter_1": {
+      "count": 1,
+      "successful_count": 1,
+      "success_rate": 1.0,
+      "avg_duration": 0.00011110305786132812,
+      "min_duration": 0.00011110305786132812,
+      "max_duration": 0.00011110305786132812,
+      "total_duration": 0.00011110305786132812
+    },
+    "technical_GOOGL_analysis_iter_0": {
+      "count": 1,
+      "successful_count": 1,
+      "success_rate": 1.0,
+      "avg_duration": 1.9014544486999512,
+      "min_duration": 1.9014544486999512,
+      "max_duration": 1.9014544486999512,
+      "total_duration": 1.9014544486999512
+    },
+    "technical_GOOGL_analysis_iter_1": {
+      "count": 1,
+      "successful_count": 1,
+      "success_rate": 1.0,
+      "avg_duration": 0.00011491775512695312,
+      "min_duration": 0.00011491775512695312,
+      "max_duration": 0.00011491775512695312,
+      "total_duration": 0.00011491775512695312
+    },
+    "technical_MSFT_analysis_iter_0": {
+      "count": 1,
+      "successful_count": 1,
+      "success_rate": 1.0,
+      "avg_duration": 1.636110544204712,
+      "min_duration": 1.636110544204712,
+      "max_duration": 1.636110544204712,
+      "total_duration": 1.636110544204712
+    },
+    "technical_MSFT_analysis_iter_1": {
+      "count": 1,
+      "successful_count": 1,
+      "success_rate": 1.0,
+      "avg_duration": 0.00010156631469726562,
+      "min_duration": 0.00010156631469726562,
+      "max_duration": 0.00010156631469726562,
+      "total_duration": 0.00010156631469726562
+    },
+    "agent_chain_technical": {
+      "count": 1,
+      "successful_count": 1,
+      "success_rate": 1.0,
+      "avg_duration": 6.604194641113281e-05,
+      "min_duration": 6.604194641113281e-05,
+      "max_duration": 6.604194641113281e-05,
+      "total_duration": 6.604194641113281e-05
+    },
+    "agent_chain_sentiment": {
+      "count": 1,
+      "successful_count": 1,
+      "success_rate": 1.0,
+      "avg_duration": 5.3882598876953125e-05,
+      "min_duration": 5.3882598876953125e-05,
+      "max_duration": 5.3882598876953125e-05,
+      "total_duration": 5.3882598876953125e-05
+    },
+    "agent_chain_risk": {
+      "count": 1,
+      "successful_count": 1,
+      "success_rate": 1.0,
+      "avg_duration": 2.4662022590637207,
+      "min_duration": 2.4662022590637207,
+      "max_duration": 2.4662022590637207,
+      "total_duration": 2.4662022590637207
+    },
+    "agent_chain_portfolio": {
+      "count": 1,
+      "successful_count": 1,
+      "success_rate": 1.0,
+      "avg_duration": 1.6413745880126953,
+      "min_duration": 1.6413745880126953,
+      "max_duration": 1.6413745880126953,
+      "total_duration": 1.6413745880126953
+    }
+  },
+  "benchmark_end": 1758904369.4388595,
+  "total_duration": 16.719877004623413,
+  "status": "completed"
+}

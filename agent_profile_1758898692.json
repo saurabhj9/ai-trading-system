@@ -1,0 +1,210 @@
+{
+  "timestamp": "2025-09-26T15:57:39.046536",
+  "benchmark_start": 1758898659.0465395,
+  "tests": {
+    "individual_agents": {
+      "technical": {
+        "agent_name": "technical",
+        "iterations": 3,
+        "successful_runs": 3,
+        "success_rate": 1.0,
+        "avg_confidence": 0.4666666666666666,
+        "avg_reasoning_length": 679.0,
+        "results": [
+          {
+            "iteration": 0,
+            "success": true,
+            "signal": "ERROR",
+            "confidence": 0.0,
+            "reasoning_length": 943
+          },
+          {
+            "iteration": 1,
+            "success": true,
+            "signal": "HOLD",
+            "confidence": 0.7,
+            "reasoning_length": 489
+          },
+          {
+            "iteration": 2,
+            "success": true,
+            "signal": "HOLD",
+            "confidence": 0.7,
+            "reasoning_length": 605
+          }
+        ]
+      },
+      "sentiment": {
+        "agent_name": "sentiment",
+        "iterations": 3,
+        "successful_runs": 3,
+        "success_rate": 1.0,
+        "avg_confidence": 0.8666666666666667,
+        "avg_reasoning_length": 377.6666666666667,
+        "results": [
+          {
+            "iteration": 0,
+            "success": true,
+            "signal": "BULLISH",
+            "confidence": 0.9,
+            "reasoning_length": 338
+          },
+          {
+            "iteration": 1,
+            "success": true,
+            "signal": "BULLISH",
+            "confidence": 0.9,
+            "reasoning_length": 475
+          },
+          {
+            "iteration": 2,
+            "success": true,
+            "signal": "BULLISH",
+            "confidence": 0.8,
+            "reasoning_length": 320
+          }
+        ]
+      },
+      "risk": {
+        "agent_name": "risk",
+        "iterations": 3,
+        "successful_runs": 3,
+        "success_rate": 1.0,
+        "avg_confidence": 0.7666666666666666,
+        "avg_reasoning_length": 77.0,
+        "results": [
+          {
+            "iteration": 0,
+            "success": true,
+            "signal": "REJECT",
+            "confidence": 0.8,
+            "reasoning_length": 77
+          },
+          {
+            "iteration": 1,
+            "success": true,
+            "signal": "REJECT",
+            "confidence": 0.8,
+            "reasoning_length": 77
+          },
+          {
+            "iteration": 2,
+            "success": true,
+            "signal": "REJECT",
+            "confidence": 0.7,
+            "reasoning_length": 77
+          }
+        ]
+      },
+      "portfolio": {
+        "agent_name": "portfolio",
+        "iterations": 3,
+        "successful_runs": 3,
+        "success_rate": 1.0,
+        "avg_confidence": 0.7333333333333334,
+        "avg_reasoning_length": 569.6666666666666,
+        "results": [
+          {
+            "iteration": 0,
+            "success": true,
+            "signal": "HOLD",
+            "confidence": 0.7,
+            "reasoning_length": 447
+          },
+          {
+            "iteration": 1,
+            "success": true,
+            "signal": "HOLD",
+            "confidence": 0.8,
+            "reasoning_length": 668
+          },
+          {
+            "iteration": 2,
+            "success": true,
+            "signal": "HOLD",
+            "confidence": 0.7,
+            "reasoning_length": 594
+          }
+        ]
+      }
+    },
+    "different_symbols": {
+      "AAPL": {
+        "agent_name": "technical_AAPL",
+        "iterations": 2,
+        "successful_runs": 2,
+        "success_rate": 1.0,
+        "avg_confidence": 0.75,
+        "avg_reasoning_length": 703.0,
+        "results": [
+          {
+            "iteration": 0,
+            "success": true,
+            "signal": "HOLD",
+            "confidence": 0.7,
+            "reasoning_length": 734
+          },
+          {
+            "iteration": 1,
+            "success": true,
+            "signal": "HOLD",
+            "confidence": 0.8,
+            "reasoning_length": 672
+          }
+        ]
+      },
+      "GOOGL": {
+        "agent_name": "technical_GOOGL",
+        "iterations": 2,
+        "successful_runs": 2,
+        "success_rate": 1.0,
+        "avg_confidence": 0.7,
+        "avg_reasoning_length": 517.5,
+        "results": [
+          {
+            "iteration": 0,
+            "success": true,
+            "signal": "SELL",
+            "confidence": 0.7,
+            "reasoning_length": 440
+          },
+          {
+            "iteration": 1,
+            "success": true,
+            "signal": "HOLD",
+            "confidence": 0.7,
+            "reasoning_length": 595
+          }
+        ]
+      },
+      "MSFT": {
+        "agent_name": "technical_MSFT",
+        "iterations": 2,
+        "successful_runs": 2,
+        "success_rate": 1.0,
+        "avg_confidence": 0.7,
+        "avg_reasoning_length": 689.5,
+        "results": [
+          {
+            "iteration": 0,
+            "success": true,
+            "signal": "HOLD",
+            "confidence": 0.7,
+            "reasoning_length": 604
+          },
+          {
+            "iteration": 1,
+            "success": true,
+            "signal": "HOLD",
+            "confidence": 0.7,
+            "reasoning_length": 775
+          }
+        ]
+      }
+    }
+  },
+  "status": "failed",
+  "error": "RiskManagementAgent.analyze() takes 2 positional arguments but 4 were given",
+  "benchmark_end": 1758898692.153515,
+  "total_duration": 33.10697555541992
+}

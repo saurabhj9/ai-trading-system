@@ -36,7 +36,7 @@ This document outlines the high-level roadmap for the development of the AI Trad
     -   [x] Create a simplified, deterministic version of the agent workflow for fast and repeatable backtests.
     -   [x] Generate initial backtest reports and performance metrics.
 
-    **Note on Mock Data:** The Sentiment, Risk, and Portfolio Management Agents currently return mock decisions for development purposes. These must be replaced with real analysis logic before paper trading or live deployment. The backtesting uses deterministic, rule-based versions of the agents for speed, but the live system will use the full LLM-based agents.
+    **Note on Mock Data:** The Sentiment Agent currently uses mock news data for development purposes. The Risk and Portfolio agents are fully implemented with LLM-based analysis. For production deployment, integrate a live news API for sentiment analysis. The backtesting uses deterministic, rule-based versions of the agents for speed, but the live system uses the full LLM-based agents.
 
 ## Phase 4: API & Deployment
 
@@ -61,8 +61,14 @@ This document outlines the high-level roadmap for the development of the AI Trad
         -   [x] Externalized hardcoded configurations (e.g., LLM provider URL, model names) into a dedicated config module using `.env` files.
         -   [x] Made the default portfolio starting cash configurable.
         -   [x] Secured the FastAPI CORS policy by allowing configuration of trusted domains.
-    -   [ ] **Optimization & Tuning:**
-        -   [ ] Optimize the data pipeline and agent processing for speed.
+    -   [x] **Optimization & Tuning:**
+        -   [x] **Performance Analysis Setup:** Created comprehensive profiling tools and metrics collection system
+        -   [x] **Data Pipeline Profiling:** Completed initial performance analysis of data fetching, caching, and indicator calculations
+        -   [x] **LLM Client Profiling:** Completed performance analysis of LLM response times, token usage, and error handling
+        -   [x] **Agent Processing Profiling:** Completed performance analysis of individual agent execution times and LLM call overhead
+        -   [x] **LLM Response Time Optimization:** Implemented caching, connection pooling, and parallel agent execution (reduced total processing time from ~40-50s to ~16.7s)
+        -   [x] **Data Pipeline Optimization:** Added retry logic for data fetching and parallel multi-symbol fetching
+        -   [x] **Agent Processing Parallelization:** Implemented parallel execution of independent agents (Technical/Sentiment)
         -   [ ] Conduct extensive backtesting with full agent logic and perform parameter tuning.
     -   [ ] **Monitoring & Reliability:**
         -   [ ] Enhance system monitoring with more detailed metrics and alerting.

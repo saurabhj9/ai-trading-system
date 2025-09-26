@@ -5,15 +5,26 @@ This agent analyzes market sentiment by processing qualitative data from
 news articles, social media, and financial news sources.
 """
 import json
+from typing import List, Dict, Any
 
 from .base import BaseAgent
 from .data_structures import AgentDecision, MarketData
+from ..config.settings import settings
 
 
 class SentimentAnalysisAgent(BaseAgent):
     """
     An agent specialized in sentiment analysis of financial markets.
     """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Initialize news provider if API key is available
+        if settings.data.ALPHA_VANTAGE_API_KEY:
+            from src.data.providers.alpha_vantage_provider import AlphaVantageProvider
+            self.news_provider = AlphaVantageProvider(settings.data.ALPHA_VANTAGE_API_KEY)
+        else:
+            self.news_provider = MockNewsProvider()
 
     def get_system_prompt(self) -> str:
         """
@@ -28,7 +39,7 @@ class SentimentAnalysisAgent(BaseAgent):
             "and 'reasoning'."
         )
 
-    async def analyze(self, market_data: MarketData) -> AgentDecision:
+    async def analyze(self, market_data: MarketData, **kwargs) -> AgentDecision:
         """
         Performs sentiment analysis on news data using an LLM.
         """
@@ -73,7 +84,7 @@ class SentimentAnalysisAgent(BaseAgent):
             supporting_data={
                 "llm_response": llm_response,
                 "news_analyzed": headlines,
-                "market_data_used": market_data.model_dump(),
+                "market_data_used": market_data.__dict__,
             },
         )
 
@@ -86,3 +97,15 @@ class SentimentAnalysisAgent(BaseAgent):
             confidence=0.0,
             reasoning=reason,
         )
+
+
+class MockNewsProvider:
+    """Mock news provider for testing when API key is not available."""
+
+    async def fetch_news_sentiment(self, symbol: str) -> List[Dict[str, Any]]:
+        """Returns mock news articles."""
+        return [
+            {"title": f"Positive market outlook for {symbol}"},
+            {"title": f"Analysts bullish on {symbol} performance"},
+            {"title": f"{symbol} shows strong quarterly results"},
+        ]

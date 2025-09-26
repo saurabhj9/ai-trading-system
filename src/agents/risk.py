@@ -32,14 +32,16 @@ class RiskManagementAgent(BaseAgent):
     async def analyze(
         self,
         market_data: MarketData,
-        proposed_decisions: Dict[str, AgentDecision],
-        portfolio_state: Dict[str, Any],
+        **kwargs
     ) -> AgentDecision:
         """
         Performs risk assessment on proposed decisions and the portfolio.
 
         TODO: Implement actual risk calculations (e.g., VaR) instead of relying solely on the LLM.
         """
+        proposed_decisions = kwargs.get("proposed_decisions", {})
+        portfolio_state = kwargs.get("portfolio_state", {})
+
         # Format the data into a user prompt.
         user_prompt = (
             f"Assess the risk for a trade in {market_data.symbol} given the following:\n"
@@ -79,7 +81,7 @@ class RiskManagementAgent(BaseAgent):
             reasoning += quantitative_reasoning
             supporting_data = {
                 "llm_response": llm_response,
-                "proposed_decisions": {k: v.model_dump() for k, v in proposed_decisions.items()},
+                "proposed_decisions": {k: v.__dict__ for k, v in proposed_decisions.items()},
                 "portfolio_state": portfolio_state,
                 "calculated_position_size": position_size,
             }

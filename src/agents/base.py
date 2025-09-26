@@ -48,15 +48,18 @@ class BaseAgent(ABC):
             setattr(self, key, value)
 
     @abstractmethod
-    async def analyze(self, market_data: MarketData) -> AgentDecision:
+    async def analyze(self, market_data: MarketData, **kwargs) -> AgentDecision:
         """
         Analyzes the given market data to produce a trading decision.
 
         This is the core method of any agent. It takes market data as input and
-        should return an AgentDecision object.
+        should return an AgentDecision object. Additional keyword arguments may
+        be provided for agents that require more context (e.g., other agent decisions,
+        portfolio state).
 
         Args:
             market_data: The market data to be analyzed.
+            **kwargs: Additional arguments specific to the agent type.
 
         Returns:
             An AgentDecision object containing the agent's analysis and signal.
