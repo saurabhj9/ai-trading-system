@@ -1,63 +1,77 @@
 """
 API routes for trade signals.
 """
+import os
 from datetime import datetime, timedelta
-from typing import Dict, Any
+from typing import Any, Dict
 
 from fastapi import APIRouter, HTTPException, Query
 
-from src.agents.data_structures import AgentDecision, AgentConfig
-from src.communication.orchestrator import Orchestrator
-from src.data.pipeline import DataPipeline
-from src.data.providers.yfinance_provider import YFinanceProvider
-from src.data.cache import CacheManager
-from src.agents.technical import TechnicalAnalysisAgent
-from src.agents.sentiment import SentimentAnalysisAgent
-from src.agents.risk import RiskManagementAgent
+from src.agents.data_structures import AgentConfig, AgentDecision
 from src.agents.portfolio import PortfolioManagementAgent
-from src.communication.state_manager import StateManager
+from src.agents.risk import RiskManagementAgent
+from src.agents.sentiment import SentimentAnalysisAgent
+from src.agents.technical import TechnicalAnalysisAgent
 from src.communication.message_bus import MessageBus
+from src.communication.orchestrator import Orchestrator
+from src.communication.state_manager import StateManager
+from src.data.cache import CacheManager
+from src.data.pipeline import DataPipeline
+from src.data.providers.alpha_vantage_provider import AlphaVantageProvider
+from src.data.providers.yfinance_provider import YFinanceProvider
 from src.llm.client import LLMClient
 from src.utils.logging import get_logger
 
 router = APIRouter()
 logger = get_logger(__name__)
 
-# Initialize components (in production, use dependency injection)
+
+# In production, use a dependency injection framework like FastAPI's `Depends`
 def get_orchestrator():
-    """Factory function to create orchestrator with proper dependencies."""
+    """Factory function to create an orchestrator with dependencies."""
     # Core components
     llm_client = LLMClient()
     message_bus = MessageBus()
     state_manager = StateManager()
 
-    # Initialize data provider
-    provider = YFinanceProvider(rate_limit=10, period=60.0)
-    
-    # Initialize cache manager (optional)
-    cache_manager = CacheManager()
-    
-    # Initialize data pipeline
-    data_pipeline = DataPipeline(provider=provider, cache=cache_manager)
-    
-    # Initialize agents with all dependencies
+    # Initialize data providers
+    yfinance_provider = YFinanceProvider(rate_limit=10, period=60.0)
+    alpha_vantage_api_key = os.getenv("ALPHA_VANTAGE_API_KEY")
+    if not alpha_vantage_api_key:
+        raise ValueError("ALPHA_VANTAGE_API_KEY environment variable not set.")
+    alpha_vantage_provider = AlphaVantageProvider(api_key=alpha_vantage_api_key)
+
+    # Initialize data pipeline (uses yfinance for market data)
+    data_pipeline = DataPipeline(provider=yfinance_provider, cache=CacheManager())
+
+    # Initialize agents
     agent_dependencies = {
         "llm_client": llm_client,
         "message_bus": message_bus,
         "state_manager": state_manager,
     }
-    technical_agent = TechnicalAnalysisAgent(config=AgentConfig(name="technical"), **agent_dependencies)
-    sentiment_agent = SentimentAnalysisAgent(config=AgentConfig(name="sentiment"), **agent_dependencies)
-    risk_agent = RiskManagementAgent(config=AgentConfig(name="risk"), **agent_dependencies)
-    portfolio_agent = PortfolioManagementAgent(config=AgentConfig(name="portfolio"), **agent_dependencies)
-    
+    technical_agent = TechnicalAnalysisAgent(
+        config=AgentConfig(name="technical"), **agent_dependencies
+    )
+    sentiment_agent = SentimentAnalysisAgent(
+        config=AgentConfig(name="sentiment"),
+        news_provider=alpha_vantage_provider,
+        **agent_dependencies,
+    )
+    risk_agent = RiskManagementAgent(
+        config=AgentConfig(name="risk"), **agent_dependencies
+    )
+    portfolio_agent = PortfolioManagementAgent(
+        config=AgentConfig(name="portfolio"), **agent_dependencies
+    )
+
     return Orchestrator(
         data_pipeline=data_pipeline,
         technical_agent=technical_agent,
         sentiment_agent=sentiment_agent,
         risk_agent=risk_agent,
         portfolio_agent=portfolio_agent,
-        state_manager=state_manager
+        state_manager=state_manager,
     )
 
 @router.get("/signals/{symbol}", response_model=Dict[str, Any])

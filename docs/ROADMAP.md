@@ -53,14 +53,14 @@ This document outlines the high-level roadmap for the development of the AI Trad
 **Goal:** Improve the performance, intelligence, and reliability of the system by replacing mock implementations with production-ready logic and externalizing configurations.
 
 -   **Deliverables:**
-    -   [ ] **Agent Logic Implementation:**
-        -   [ ] Implement robust LLM response parsing for all agents (`Technical`, `Sentiment`, `Risk`, `Portfolio`).
-        -   [ ] Replace mock `AgentDecision` returns with logic derived from LLM analysis.
-        -   [ ] Integrate a real-time news API for the `SentimentAnalysisAgent`, replacing the current mock news data.
-    -   [ ] **Configuration Management:**
-        -   [ ] Externalize hardcoded configurations (e.g., LLM provider URL, model names) into `.env` files or a dedicated config module.
-        -   [ ] Make the default portfolio starting cash configurable.
-        -   [ ] Secure the FastAPI CORS policy by replacing `allow_origins=["*"]` with a specific production domain.
+    -   [x] **Agent Logic Implementation:**
+            -   [x] Implement robust LLM response parsing for all agents (`Technical`, `Sentiment`, `Risk`, `Portfolio`).
+            -   [x] Replace mock `AgentDecision` returns with logic derived from LLM analysis.
+            -   [x] Integrate a real-time news API for the `SentimentAnalysisAgent`, replacing the current mock news data.
+    -   [x] **Configuration Management:**
+        -   [x] Externalized hardcoded configurations (e.g., LLM provider URL, model names) into a dedicated config module using `.env` files.
+        -   [x] Made the default portfolio starting cash configurable.
+        -   [x] Secured the FastAPI CORS policy by allowing configuration of trusted domains.
     -   [ ] **Optimization & Tuning:**
         -   [ ] Optimize the data pipeline and agent processing for speed.
         -   [ ] Conduct extensive backtesting with full agent logic and perform parameter tuning.

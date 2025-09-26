@@ -11,6 +11,7 @@ from src.agents.portfolio import PortfolioManagementAgent
 from src.agents.risk import RiskManagementAgent
 from src.agents.sentiment import SentimentAnalysisAgent
 from src.agents.technical import TechnicalAnalysisAgent
+from src.config.settings import settings
 from src.data.pipeline import DataPipeline
 
 
@@ -37,7 +38,7 @@ class Orchestrator:
         sentiment_agent: SentimentAnalysisAgent,
         risk_agent: RiskManagementAgent,
         portfolio_agent: PortfolioManagementAgent,
-        state_manager: Any  # For portfolio state
+        state_manager: Any,  # For portfolio state
     ):
         self.data_pipeline = data_pipeline
         self.technical_agent = technical_agent
@@ -87,7 +88,9 @@ class Orchestrator:
         if not market_data:
             return {"error": "Market data not found"}
 
-        decision = await self.risk_agent.analyze(market_data, decisions, portfolio_state)
+        decision = await self.risk_agent.analyze(
+            market_data, decisions, portfolio_state
+        )
         decisions["risk"] = decision
         return {"decisions": decisions}
 
@@ -98,15 +101,24 @@ class Orchestrator:
         if not market_data:
             return {"error": "Market data not found"}
 
-        final_decision = await self.portfolio_agent.analyze(market_data, decisions, portfolio_state)
+        final_decision = await self.portfolio_agent.analyze(
+            market_data, decisions, portfolio_state
+        )
         return {"final_decision": final_decision}
 
-    async def run(self, symbol: str, start_date: datetime, end_date: datetime) -> AgentState:
-        market_data = await self.data_pipeline.fetch_and_process_data(symbol, start_date, end_date)
+    async def run(
+        self, symbol: str, start_date: datetime, end_date: datetime
+    ) -> AgentState:
+        market_data = await self.data_pipeline.fetch_and_process_data(
+            symbol, start_date, end_date
+        )
         if not market_data:
             return AgentState(error=f"Failed to fetch data for {symbol}")
 
-        portfolio_state = self.state_manager.get_portfolio_state() or {"cash": 100000, "positions": {}}
+        portfolio_state = self.state_manager.get_portfolio_state() or {
+            "cash": settings.portfolio.STARTING_CASH,
+            "positions": {},
+        }
         initial_state = AgentState(
             market_data=market_data,
             decisions={},

@@ -9,6 +9,9 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, Optional
 
+from src.config.settings import settings
+
+
 @dataclass
 class AgentConfig:
     """
@@ -23,7 +26,7 @@ class AgentConfig:
         retry_attempts: The number of times to retry a failed API call.
     """
     name: str
-    model_name: str = "anthropic/claude-3-haiku"
+    model_name: str = settings.llm.DEFAULT_MODEL
     temperature: float = 0.1
     max_tokens: int = 2000
     timeout: float = 30.0

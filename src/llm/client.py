@@ -1,35 +1,35 @@
 """
 LLM Client for the AI Trading System, using OpenRouter.
 """
-import os
 from typing import Any, Optional
 
 from openai import OpenAI
+
+from src.config.settings import settings
+
 
 class LLMClient:
     """
     A client for interacting with various large language models via OpenRouter.
     """
-    def __init__(self, api_key: Optional[str] = None, site_url: Optional[str] = "https://my-site.com", app_name: Optional[str] = "AI Trading System"):
+    def __init__(self, api_key: Optional[str] = None):
         """
         Initializes the LLMClient for OpenRouter.
 
         Args:
             api_key: The OpenRouter API key. If not provided, it will be read
                      from the OPENROUTER_API_KEY environment variable.
-            site_url: Your site's URL, for OpenRouter analytics.
-            app_name: Your app's name, for OpenRouter analytics.
         """
-        self.api_key = api_key or os.environ.get("OPENROUTER_API_KEY")
+        self.api_key = api_key or settings.OPENROUTER_API_KEY
         if not self.api_key:
             raise ValueError("OPENROUTER_API_KEY environment variable not set.")
-        
+
         self.client = OpenAI(
-            base_url="https://openrouter.ai/api/v1",
+            base_url=settings.llm.BASE_URL,
             api_key=self.api_key,
             default_headers={
-                "HTTP-Referer": site_url,
-                "X-Title": app_name,
+                "HTTP-Referer": settings.llm.SITE_URL,
+                "X-Title": settings.llm.APP_NAME,
             },
         )
 

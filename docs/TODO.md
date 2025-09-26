@@ -29,9 +29,6 @@ All Phase 3 deliverables have been implemented:
 
 ## Important Notes on Mock Data
 
-- **SentimentAnalysisAgent**: Returns mock NEUTRAL signals. Replace with real news/social media analysis before live use.
-- **RiskManagementAgent**: Always APPROVE. Implement actual risk metrics (VaR, position sizing) for paper trading.
-- **PortfolioManagementAgent**: Follows technical signals. Enhance to consider all agents and portfolio state.
 - **Backtesting**: Uses deterministic agents for speed. For accurate backtests, integrate full agents (but this will be slower).
 
 ## Phase 4: API & Deployment - COMPLETED
@@ -62,18 +59,18 @@ All Phase 4 deliverables have been implemented:
 
 This phase focuses on replacing mock implementations with production-ready logic, externalizing configurations, and enhancing overall system performance and reliability.
 
-### Milestone 1: Implement Core Agent Logic
+### Milestone 1: Implement Core Agent Logic - COMPLETED
 
--   [ ] **LLM Response Parsing:** Implement robust parsing logic in all agents (`Technical`, `Sentiment`, `Risk`, `Portfolio`) to replace mock `AgentDecision` returns with analysis derived from the LLM.
--   [ ] **Sentiment Analysis Agent:** Integrate a live news data provider (e.g., NewsAPI, Alpha Vantage News) to replace the current `mock_news` list.
--   [ ] **Risk Management Agent:** Implement actual risk calculations (e.g., position sizing, Value at Risk) instead of the mock "APPROVE" signal.
+-   [x] **LLM Response Parsing:** Implement robust parsing logic in all agents (`Technical`, `Sentiment`, `Risk`, `Portfolio`) to replace mock `AgentDecision` returns with analysis derived from the LLM.
+-   [x] **Sentiment Analysis Agent:** Integrate a live news data provider (e.g., NewsAPI, Alpha Vantage News) to replace the current `mock_news` list.
+-   [x] **Risk Management Agent:** Implement actual risk calculations (e.g., position sizing, Value at Risk) instead of the mock "APPROVE" signal.
 
-### Milestone 2: Externalize Configurations
+### Milestone 2: Externalize Configurations - COMPLETED
 
--   [ ] **Centralize Settings:** Move hardcoded values from the codebase into a structured configuration system (e.g., `.env` files with a `config.py` loader).
-    -   [ ] LLM provider URL and model names (`src/llm/client.py`, `src/agents/data_structures.py`).
-    -   [ ] Default portfolio starting cash (`src/communication/orchestrator.py`).
--   [ ] **Secure API:** Update the FastAPI CORS policy in `src/api/app.py` to use a specific list of allowed origins instead of `["*"]`.
+-   [x] **Centralize Settings:** Moved hardcoded values from the codebase into a structured configuration system (`.env` files with a `config.py` loader).
+    -   [x] LLM provider URL and model names (`src/llm/client.py`, `src/agents/data_structures.py`).
+    -   [x] Default portfolio starting cash (`src/communication/orchestrator.py`).
+-   [x] **Secure API:** Updated the FastAPI CORS policy in `src/api/app.py` to use a specific list of allowed origins from the new configuration system.
 
 ### Milestone 3: Optimization and Tuning
 

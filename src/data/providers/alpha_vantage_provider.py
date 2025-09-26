@@ -4,7 +4,7 @@ Data provider implementation for fetching market data from Alpha Vantage.
 import asyncio
 import os
 from datetime import datetime
-from typing import Optional
+from typing import Dict, Any, List, Optional
 
 import aiohttp
 import pandas as pd
@@ -99,4 +99,40 @@ class AlphaVantageProvider(BaseDataProvider):
             return None
         except (ValueError, KeyError) as e:
             print(f"Error parsing current price for {symbol} from Alpha Vantage: {e}")
+            return None
+
+    async def fetch_news_sentiment(self, symbol: str, limit: int = 20) -> Optional[List[Dict[str, Any]]]:
+        """
+        Fetches news and sentiment data from Alpha Vantage.
+
+        Args:
+            symbol: The stock ticker to fetch news for.
+            limit: The maximum number of news articles to return.
+
+        Returns:
+            A list of news articles, each as a dictionary.
+        """
+        params = {
+            "function": "NEWS_SENTIMENT",
+            "tickers": symbol,
+            "apikey": self.api_key,
+            "limit": str(limit),
+        }
+        try:
+            async with self.throttler, aiohttp.ClientSession() as session:
+                async with session.get(self.base_url, params=params) as response:
+                    response.raise_for_status()
+                    data = await response.json()
+
+            if "feed" in data:
+                return data["feed"]
+            else:
+                print(f"Could not retrieve news for {symbol} from Alpha Vantage: {data.get('Note') or data}")
+                return None
+
+        except aiohttp.ClientError as e:
+            print(f"HTTP Error fetching news for {symbol} from Alpha Vantage: {e}")
+            return None
+        except Exception as e:
+            print(f"An unexpected error occurred while fetching news for {symbol}: {e}")
             return None

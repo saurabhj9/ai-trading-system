@@ -27,6 +27,7 @@ class BaseAgent(ABC):
         llm_client: Any,
         message_bus: Any,
         state_manager: Any,
+        **kwargs,
     ):
         """
         Initializes the BaseAgent.
@@ -36,11 +37,15 @@ class BaseAgent(ABC):
             llm_client: An instance of a client for interacting with a large language model.
             message_bus: An instance of the system's message bus for communication.
             state_manager: An instance of the system's state manager.
+            **kwargs: Additional keyword arguments for agent-specific dependencies.
         """
         self.config = config
         self.llm_client = llm_client
         self.message_bus = message_bus
         self.state_manager = state_manager
+        # Capture any extra dependencies
+        for key, value in kwargs.items():
+            setattr(self, key, value)
 
     @abstractmethod
     async def analyze(self, market_data: MarketData) -> AgentDecision:
