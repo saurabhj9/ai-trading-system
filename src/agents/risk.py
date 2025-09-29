@@ -29,21 +29,14 @@ class RiskManagementAgent(BaseAgent):
             "'signal', 'confidence', and 'reasoning'."
         )
 
-    async def analyze(
-        self,
-        market_data: MarketData,
-        **kwargs
-    ) -> AgentDecision:
+    async def get_user_prompt(self, market_data: MarketData, **kwargs) -> str:
         """
-        Performs risk assessment on proposed decisions and the portfolio.
-
-        TODO: Implement actual risk calculations (e.g., VaR) instead of relying solely on the LLM.
+        Generates the user prompt for risk assessment.
         """
         proposed_decisions = kwargs.get("proposed_decisions", {})
         portfolio_state = kwargs.get("portfolio_state", {})
 
-        # Format the data into a user prompt.
-        user_prompt = (
+        return (
             f"Assess the risk for a trade in {market_data.symbol} given the following:\n"
             f"- Market Data: Price=${market_data.price}, Volume={market_data.volume}\n"
             f"- Current Portfolio: {portfolio_state}\n"
@@ -52,12 +45,15 @@ class RiskManagementAgent(BaseAgent):
             "confidence, and reasoning as a single JSON object."
         )
 
-        # Make the LLM call.
-        llm_response = await self.make_llm_call(user_prompt)
+    def create_decision(self, market_data: MarketData, response: str, **kwargs) -> AgentDecision:
+        """
+        Creates an AgentDecision from the LLM response for risk assessment.
+        """
+        proposed_decisions = kwargs.get("proposed_decisions", {})
+        portfolio_state = kwargs.get("portfolio_state", {})
 
-        # Parse the LLM's JSON response to create an AgentDecision.
         try:
-            decision_json = json.loads(llm_response)
+            decision_json = json.loads(response)
             signal = decision_json.get("signal", "REJECT")
             confidence = float(decision_json.get("confidence", 0.0))
             reasoning = decision_json.get("reasoning", "No reasoning provided.")
@@ -65,7 +61,7 @@ class RiskManagementAgent(BaseAgent):
             # If parsing fails, create a default decision with an error message.
             signal = "ERROR"
             confidence = 0.0
-            reasoning = f"Failed to parse LLM response: {e}. Raw response: {llm_response}"
+            reasoning = f"Failed to parse LLM response: {e}. Raw response: {response}"
 
         # Perform quantitative risk calculations
         try:
@@ -80,7 +76,7 @@ class RiskManagementAgent(BaseAgent):
             )
             reasoning += quantitative_reasoning
             supporting_data = {
-                "llm_response": llm_response,
+                "llm_response": response,
                 "proposed_decisions": {k: v.__dict__ for k, v in proposed_decisions.items()},
                 "portfolio_state": portfolio_state,
                 "calculated_position_size": position_size,
@@ -89,7 +85,7 @@ class RiskManagementAgent(BaseAgent):
             signal = "REJECT"
             reasoning = f"Risk calculation failed: {e}"
             supporting_data = {
-                "llm_response": llm_response,
+                "llm_response": response,
                 "error": str(e)
             }
 
@@ -101,6 +97,20 @@ class RiskManagementAgent(BaseAgent):
             reasoning=reasoning,
             supporting_data=supporting_data,
         )
+
+    async def analyze(
+        self,
+        market_data: MarketData,
+        **kwargs
+    ) -> AgentDecision:
+        """
+        Performs risk assessment on proposed decisions and the portfolio.
+
+        TODO: Implement actual risk calculations (e.g., VaR) instead of relying solely on the LLM.
+        """
+        user_prompt = await self.get_user_prompt(market_data, **kwargs)
+        llm_response = await self.make_llm_call(user_prompt)
+        return self.create_decision(market_data, llm_response, **kwargs)
 
     def _calculate_position_size(
         self, portfolio_equity: float, current_price: float, risk_per_trade: float = 0.01, stop_loss_pct: float = 0.05

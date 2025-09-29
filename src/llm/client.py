@@ -1,14 +1,19 @@
 """
 LLM Client for the AI Trading System, using OpenRouter.
 """
+import asyncio
 import hashlib
-from typing import Any, Optional
+from typing import Any, List, Optional, Tuple
 
 import httpx
 from openai import OpenAI
 
 from src.config.settings import settings
 from src.data.cache import CacheManager
+from src.utils.logging import get_logger
+from src.utils.performance import time_function
+
+logger = get_logger(__name__)
 
 
 class LLMClient:
@@ -93,3 +98,43 @@ class LLMClient:
         self.cache.set(cache_key, response, settings.llm.CACHE_TTL_SECONDS)
 
         return response
+
+    @time_function(operation_name="llm_generate_batch")
+    async def generate_batch(self, requests: List[Tuple[str, str, str]]) -> List[str]:
+        """
+        Generates responses for multiple requests concurrently.
+
+        Args:
+            requests: List of tuples (model, prompt, system_prompt)
+
+        Returns:
+            List of response strings in the same order as requests.
+        """
+        logger.info(f"Processing batch of {len(requests)} LLM requests concurrently")
+
+        # Create tasks for concurrent execution
+        tasks = [
+            self.generate(model, prompt, system_prompt)
+            for model, prompt, system_prompt in requests
+        ]
+
+        try:
+            # Execute all requests concurrently
+            responses = await asyncio.gather(*tasks, return_exceptions=True)
+
+            # Handle exceptions in responses
+            processed_responses = []
+            for i, response in enumerate(responses):
+                if isinstance(response, Exception):
+                    logger.error(f"Error in batch request {i}: {response}")
+                    processed_responses.append(f"Error: {str(response)}")
+                else:
+                    processed_responses.append(response)
+
+            logger.info(f"Successfully processed batch of {len(requests)} requests")
+            return processed_responses
+
+        except Exception as e:
+            logger.error(f"Batch processing failed: {e}")
+            # Return error messages for all requests
+            return [f"Batch error: {str(e)}"] * len(requests)

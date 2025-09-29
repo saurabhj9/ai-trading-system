@@ -29,13 +29,9 @@ class PortfolioManagementAgent(BaseAgent):
             "three keys: 'signal', 'confidence', and 'reasoning'."
         )
 
-    async def analyze(
-        self,
-        market_data: MarketData,
-        **kwargs
-    ) -> AgentDecision:
+    async def get_user_prompt(self, market_data: MarketData, **kwargs) -> str:
         """
-        Makes the final portfolio management decision by synthesizing agent inputs.
+        Generates the user prompt for portfolio management.
         """
         agent_decisions = kwargs.get("agent_decisions", {})
         portfolio_state = kwargs.get("portfolio_state", {})
@@ -45,7 +41,7 @@ class PortfolioManagementAgent(BaseAgent):
             name: {"signal": dec.signal, "confidence": dec.confidence}
             for name, dec in agent_decisions.items()
         }
-        user_prompt = (
+        return (
             f"Synthesize the following analyses for {market_data.symbol} to make a final trade decision:\n"
             f"- Market Data: Current Price=${market_data.price}\n"
             f"- Agent Decisions: {json.dumps(decisions_summary, indent=2)}\n"
@@ -54,12 +50,16 @@ class PortfolioManagementAgent(BaseAgent):
             "confidence, and reasoning as a single JSON object."
         )
 
-        # Make the LLM call.
-        llm_response = await self.make_llm_call(user_prompt)
+    def create_decision(self, market_data: MarketData, response: str, **kwargs) -> AgentDecision:
+        """
+        Creates an AgentDecision from the LLM response for portfolio management.
+        """
+        agent_decisions = kwargs.get("agent_decisions", {})
+        portfolio_state = kwargs.get("portfolio_state", {})
 
         # Parse the LLM's JSON response to create an AgentDecision.
         try:
-            decision_json = json.loads(llm_response)
+            decision_json = json.loads(response)
             signal = decision_json.get("signal", "HOLD")
             confidence = float(decision_json.get("confidence", 0.0))
             reasoning = decision_json.get("reasoning", "No reasoning provided.")
@@ -67,7 +67,7 @@ class PortfolioManagementAgent(BaseAgent):
             # If parsing fails, create a default decision with an error message.
             signal = "ERROR"
             confidence = 0.0
-            reasoning = f"Failed to parse LLM response: {e}. Raw response: {llm_response}"
+            reasoning = f"Failed to parse LLM response: {e}. Raw response: {response}"
 
         return AgentDecision(
             agent_name=self.config.name,
@@ -76,10 +76,22 @@ class PortfolioManagementAgent(BaseAgent):
             confidence=confidence,
             reasoning=reasoning,
             supporting_data={
-                "llm_response": llm_response,
+                "llm_response": response,
                 "agent_decisions": {
                     k: v.__dict__ for k, v in agent_decisions.items()
                 },
                 "portfolio_state": portfolio_state,
             },
         )
+
+    async def analyze(
+        self,
+        market_data: MarketData,
+        **kwargs
+    ) -> AgentDecision:
+        """
+        Makes the final portfolio management decision by synthesizing agent inputs.
+        """
+        user_prompt = await self.get_user_prompt(market_data, **kwargs)
+        llm_response = await self.make_llm_call(user_prompt)
+        return self.create_decision(market_data, llm_response, **kwargs)

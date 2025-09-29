@@ -71,6 +71,8 @@ data/backtest_results/
 data/cache/
 data/logs/
 sessionSummary/
+performance_archive/
+*_profile_*.json
 .python-version
 GEMINI.md
 startingDocs/**

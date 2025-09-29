@@ -13,6 +13,7 @@ import time
 from datetime import datetime
 from typing import List, Dict, Any
 import json
+from datetime import datetime
 
 from src.config.settings import settings
 from src.llm.client import LLMClient
@@ -21,8 +22,94 @@ from src.utils.performance import (
     log_performance_report, reset_performance_metrics
 )
 from src.utils.logging import configure_logging, get_logger
+from src.agents.data_structures import MarketData
 
 logger = get_logger(__name__)
+
+# Golden dataset for quality benchmarking
+GOLDEN_DATASET = {
+    "bullish_technical": {
+        "market_data": MarketData(
+            symbol="AAPL",
+            price=150.0,
+            volume=1000000,
+            timestamp=datetime.now(),
+            ohlc={"open": 145.0, "high": 152.0, "low": 144.0, "close": 150.0},
+            technical_indicators={
+                "rsi": 75.0,
+                "macd": {"signal": 2.5, "histogram": 0.8},
+                "sma_20": 140.0,
+                "sma_50": 135.0
+            }
+        ),
+        "news_headlines": [
+            "Apple reports record quarterly earnings",
+            "Analysts upgrade AAPL stock rating",
+            "Strong demand for iPhone drives Apple shares higher"
+        ],
+        "portfolio_state": {"equity": 100000.0, "cash": 50000.0},
+        "expected_signals": {
+            "technical": "BUY",
+            "sentiment": "BULLISH",
+            "risk": "APPROVE",
+            "portfolio": "BUY"
+        }
+    },
+    "bearish_technical": {
+        "market_data": MarketData(
+            symbol="TSLA",
+            price=200.0,
+            volume=500000,
+            timestamp=datetime.now(),
+            ohlc={"open": 210.0, "high": 212.0, "low": 195.0, "close": 200.0},
+            technical_indicators={
+                "rsi": 25.0,
+                "macd": {"signal": -3.2, "histogram": -1.5},
+                "sma_20": 220.0,
+                "sma_50": 225.0
+            }
+        ),
+        "news_headlines": [
+            "Tesla faces production delays",
+            "Competition intensifies in EV market",
+            "Tesla stock drops on regulatory concerns"
+        ],
+        "portfolio_state": {"equity": 100000.0, "cash": 50000.0},
+        "expected_signals": {
+            "technical": "SELL",
+            "sentiment": "BEARISH",
+            "risk": "REJECT",
+            "portfolio": "SELL"
+        }
+    },
+    "neutral_scenario": {
+        "market_data": MarketData(
+            symbol="GOOGL",
+            price=2800.0,
+            volume=800000,
+            timestamp=datetime.now(),
+            ohlc={"open": 2790.0, "high": 2820.0, "low": 2780.0, "close": 2800.0},
+            technical_indicators={
+                "rsi": 55.0,
+                "macd": {"signal": 0.5, "histogram": 0.1},
+                "sma_20": 2790.0,
+                "sma_50": 2780.0
+            }
+        ),
+        "news_headlines": [
+            "Google announces new AI features",
+            "Alphabet quarterly results meet expectations",
+            "Mixed analyst reactions to Google earnings"
+        ],
+        "portfolio_state": {"equity": 100000.0, "cash": 50000.0},
+        "expected_signals": {
+            "technical": "HOLD",
+            "sentiment": "NEUTRAL",
+            "risk": "APPROVE",
+            "portfolio": "HOLD"
+        }
+    }
+}
 
 
 @measure_llm_call("anthropic/claude-3-haiku")
@@ -126,7 +213,9 @@ async def benchmark_different_models(client: LLMClient) -> Dict[str, Any]:
     """
     models_to_test = [
         "anthropic/claude-3-haiku",
-        # Add other models as needed
+        "anthropic/claude-3.5-sonnet",
+        "openai/gpt-4o-mini",
+        # Add more models as needed
     ]
 
     results = {}
@@ -170,6 +259,158 @@ async def benchmark_error_handling(client: LLMClient) -> Dict[str, Any]:
         }
 
     return {"invalid_model_test": error_result}
+
+
+async def benchmark_decision_quality(client: LLMClient) -> Dict[str, Any]:
+    """
+    Benchmark the quality of LLM decision-making using agent-like prompts.
+
+    Args:
+        client: LLM client instance
+
+    Returns:
+        Dictionary with quality benchmark results for each model and scenario
+    """
+    models_to_test = [
+        "anthropic/claude-3-haiku",  # Baseline
+        "anthropic/claude-3.5-sonnet",
+        "anthropic/claude-3-opus",
+        "x-ai/grok-4-fast",
+        "deepseek/deepseek-v3.1-terminus",
+        "openai/gpt-5-mini",
+        "openai/gpt-4o-mini",
+        "google/gemini-2.5-flash",
+    ]
+
+    results = {}
+
+    for model in models_to_test:
+        logger.info(f"Benchmarking decision quality for model: {model}")
+        model_results = {}
+
+        for scenario_name, scenario_data in GOLDEN_DATASET.items():
+            logger.info(f"Testing scenario: {scenario_name}")
+            scenario_results = {}
+
+            # Technical Analysis Prompt
+            technical_system = (
+                "You are a specialized AI assistant for financial technical analysis. "
+                "Your goal is to analyze the provided market data and technical indicators. "
+                "Determine a trading signal (BUY, SELL, or HOLD) and a confidence score (0.0 to 1.0). "
+                "You must provide your reasoning in a brief, data-driven explanation. "
+                "Your final output must be a single JSON object with three keys: "
+                "'signal', 'confidence', and 'reasoning'."
+            )
+            market_data = scenario_data["market_data"]
+            technical_prompt = (
+                f"Analyze the following market data for {market_data.symbol}:\n"
+                f"- Current Price: {market_data.price}\n"
+                f"- Trading Volume: {market_data.volume}\n"
+                f"- OHLC: {market_data.ohlc}\n"
+                f"- Technical Indicators: {market_data.technical_indicators}\n\n"
+                "Based on this data, provide your trading signal, confidence, and reasoning "
+                "as a single JSON object."
+            )
+
+            try:
+                technical_response = await client.generate(model, technical_prompt, technical_system)
+                scenario_results["technical"] = {
+                    "response": technical_response,
+                    "expected_signal": scenario_data["expected_signals"]["technical"]
+                }
+            except Exception as e:
+                scenario_results["technical"] = {"error": str(e)}
+
+            # Sentiment Analysis Prompt
+            sentiment_system = (
+                "You are a specialized AI assistant for financial sentiment analysis. "
+                "Your goal is to analyze news headlines related to a stock and determine "
+                "the market sentiment (BULLISH, BEARISH, or NEUTRAL). Provide a confidence "
+                "score (0.0 to 1.0) and a brief, data-driven reasoning. Your final output "
+                "must be a single JSON object with three keys: 'signal', 'confidence', "
+                "and 'reasoning'."
+            )
+            headlines = scenario_data["news_headlines"]
+            sentiment_prompt = (
+                f"Analyze the sentiment from the following news headlines for {market_data.symbol}:\n"
+                + "\n".join(f"- {headline}" for headline in headlines)
+                + "\n\nBased on these headlines, provide your sentiment (BULLISH, BEARISH, or NEUTRAL), "
+                "confidence, and reasoning as a single JSON object."
+            )
+
+            try:
+                sentiment_response = await client.generate(model, sentiment_prompt, sentiment_system)
+                scenario_results["sentiment"] = {
+                    "response": sentiment_response,
+                    "expected_signal": scenario_data["expected_signals"]["sentiment"]
+                }
+            except Exception as e:
+                scenario_results["sentiment"] = {"error": str(e)}
+
+            # Risk Management Prompt (simplified)
+            risk_system = (
+                "You are a specialized AI assistant for financial risk management. "
+                "Your goal is to assess the risk of a proposed trade. Analyze the "
+                "provided market data and portfolio state. "
+                "Determine a risk assessment signal (APPROVE or REJECT), a confidence score (0.0 to 1.0), "
+                "and provide data-driven reasoning. Your final output must be a single JSON object with three keys: "
+                "'signal', 'confidence', and 'reasoning'."
+            )
+            portfolio_state = scenario_data["portfolio_state"]
+            risk_prompt = (
+                f"Assess the risk for a trade in {market_data.symbol} given the following:\n"
+                f"- Market Data: Price=${market_data.price}, Volume={market_data.volume}\n"
+                f"- Current Portfolio: {portfolio_state}\n\n"
+                "Based on this data, provide your risk assessment (APPROVE or REJECT), "
+                "confidence, and reasoning as a single JSON object."
+            )
+
+            try:
+                risk_response = await client.generate(model, risk_prompt, risk_system)
+                scenario_results["risk"] = {
+                    "response": risk_response,
+                    "expected_signal": scenario_data["expected_signals"]["risk"]
+                }
+            except Exception as e:
+                scenario_results["risk"] = {"error": str(e)}
+
+            # Portfolio Management Prompt (simplified)
+            portfolio_system = (
+                "You are a specialized AI assistant for portfolio management. Your goal is to "
+                "synthesize inputs from technical and sentiment analysis. "
+                "Consider the current portfolio state and make a final trading decision "
+                "(BUY, SELL, or HOLD). Provide a confidence score (0.0 to 1.0) and "
+                "data-driven reasoning. Your final output must be a single JSON object with "
+                "three keys: 'signal', 'confidence', and 'reasoning'."
+            )
+            # Mock agent decisions for portfolio
+            mock_decisions = {
+                "technical": {"signal": scenario_results.get("technical", {}).get("response", "HOLD")},
+                "sentiment": {"signal": scenario_results.get("sentiment", {}).get("response", "NEUTRAL")}
+            }
+            portfolio_prompt = (
+                f"Synthesize the following analyses for {market_data.symbol} to make a final trade decision:\n"
+                f"- Market Data: Current Price=${market_data.price}\n"
+                f"- Agent Decisions: {json.dumps(mock_decisions)}\n"
+                f"- Current Portfolio: {portfolio_state}\n\n"
+                "Based on all available data, provide your final decision (BUY, SELL, or HOLD), "
+                "confidence, and reasoning as a single JSON object."
+            )
+
+            try:
+                portfolio_response = await client.generate(model, portfolio_prompt, portfolio_system)
+                scenario_results["portfolio"] = {
+                    "response": portfolio_response,
+                    "expected_signal": scenario_data["expected_signals"]["portfolio"]
+                }
+            except Exception as e:
+                scenario_results["portfolio"] = {"error": str(e)}
+
+            model_results[scenario_name] = scenario_results
+
+        results[model] = model_results
+
+    return results
 
 
 async def run_comprehensive_llm_benchmark() -> Dict[str, Any]:
@@ -224,6 +465,11 @@ async def run_comprehensive_llm_benchmark() -> Dict[str, Any]:
         logger.info("Benchmarking error handling")
         error_results = await benchmark_error_handling(client)
         results["tests"]["error_handling"] = error_results
+
+        # Benchmark decision quality
+        logger.info("Benchmarking decision quality")
+        quality_results = await benchmark_decision_quality(client)
+        results["tests"]["decision_quality"] = quality_results
 
         # Get performance summary
         performance_summary = get_performance_summary()
@@ -290,6 +536,13 @@ async def main():
             print(f"  Avg Prompt Tokens: {rt['avg_prompt_tokens']:.0f}")
             print(f"  Avg Completion Tokens: {rt['avg_completion_tokens']:.0f}")
             print(f"  Avg Total Tokens: {rt['avg_total_tokens']:.0f}")
+
+    if "tests" in results and "decision_quality" in results["tests"]:
+        dq = results["tests"]["decision_quality"]
+        print(f"\nDecision Quality Test Results:")
+        print(f"  Models tested: {len(dq)}")
+        print(f"  Scenarios tested: {len(GOLDEN_DATASET)}")
+        print("  Quality results saved for manual review in the JSON output")
 
     print(f"\nDetailed results saved to: {output_file}")
 

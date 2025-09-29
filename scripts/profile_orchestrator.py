@@ -306,10 +306,14 @@ async def run_comprehensive_orchestrator_benchmark() -> Dict[str, Any]:
         orchestrator_results = {}
         for symbol in symbols:
             logger.info(f"Benchmarking orchestrator with symbol: {symbol}")
-            symbol_results = await benchmark_orchestrator_run(
-                orchestrator, symbol, start_date, end_date, iterations=2
-            )
-            orchestrator_results[symbol] = symbol_results
+            try:
+                symbol_results = await benchmark_orchestrator_run(
+                    orchestrator, symbol, start_date, end_date, iterations=2
+                )
+                orchestrator_results[symbol] = symbol_results
+            except Exception as e:
+                logger.error(f"Error benchmarking {symbol}", error=str(e))
+                orchestrator_results[symbol] = {"error": str(e)}
         results["tests"]["orchestrator_runs"] = orchestrator_results
 
         # Get market data for parallel vs sequential analysis
@@ -367,9 +371,11 @@ async def run_comprehensive_orchestrator_benchmark() -> Dict[str, Any]:
         logger.info("Orchestrator workflow benchmarking completed", duration=results["total_duration"])
 
     except Exception as e:
-        logger.error("Error during orchestrator benchmarking", error=str(e))
+        import traceback
+        logger.error("Error during orchestrator benchmarking", error=str(e), traceback=traceback.format_exc())
         results["status"] = "failed"
         results["error"] = str(e)
+        results["traceback"] = traceback.format_exc()
         results["benchmark_end"] = time.time()
         results["total_duration"] = results["benchmark_end"] - results["benchmark_start"]
 

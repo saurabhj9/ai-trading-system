@@ -13,6 +13,7 @@ from src.agents.sentiment import SentimentAnalysisAgent
 from src.agents.technical import TechnicalAnalysisAgent
 from src.config.settings import settings
 from src.data.pipeline import DataPipeline
+from src.llm.batch_client import BatchRequestManager
 
 
 class AgentState(dict):
@@ -46,18 +47,23 @@ class Orchestrator:
         self.risk_agent = risk_agent
         self.portfolio_agent = portfolio_agent
         self.state_manager = state_manager
+        self.batch_manager = BatchRequestManager(technical_agent.llm_client)
         self.workflow = self._build_graph()
 
     def _build_graph(self):
+        from langgraph.constants import START
         workflow = StateGraph(AgentState)
         workflow.add_node("technical_analysis", self.run_technical_analysis)
         workflow.add_node("sentiment_analysis", self.run_sentiment_analysis)
+        workflow.add_node("batch_process", self.run_batch_process)
         workflow.add_node("risk_management", self.run_risk_management)
         workflow.add_node("portfolio_management", self.run_portfolio_management)
-        # Run technical and sentiment in parallel since they are independent
-        workflow.set_entry_point(["technical_analysis", "sentiment_analysis"])
-        workflow.add_edge("technical_analysis", "risk_management")
-        workflow.add_edge("sentiment_analysis", "risk_management")
+        # Run technical and sentiment in parallel to queue requests, then batch process
+        workflow.add_edge(START, "technical_analysis")
+        workflow.add_edge(START, "sentiment_analysis")
+        workflow.add_edge("technical_analysis", "batch_process")
+        workflow.add_edge("sentiment_analysis", "batch_process")
+        workflow.add_edge("batch_process", "risk_management")
         workflow.add_edge("risk_management", "portfolio_management")
         workflow.add_edge("portfolio_management", END)
         return workflow.compile()
@@ -67,19 +73,45 @@ class Orchestrator:
         if not market_data:
             return {"error": "Market data not found"}
 
-        decision = await self.technical_agent.analyze(market_data)
-        decisions = state.get("decisions", {})
-        decisions["technical"] = decision
-        return {"decisions": decisions}
+        user_prompt = await self.technical_agent.get_user_prompt(market_data)
+        await self.batch_manager.add_request(
+            "technical",
+            self.technical_agent.config.model_name,
+            user_prompt,
+            self.technical_agent.get_system_prompt()
+        )
+        return {"batched_technical": True}
 
     async def run_sentiment_analysis(self, state: AgentState) -> dict:
         market_data = state.get("market_data")
         if not market_data:
             return {"error": "Market data not found"}
 
-        decision = await self.sentiment_agent.analyze(market_data)
+        user_prompt = await self.sentiment_agent.get_user_prompt(market_data)
+        await self.batch_manager.add_request(
+            "sentiment",
+            self.sentiment_agent.config.model_name,
+            user_prompt,
+            self.sentiment_agent.get_system_prompt()
+        )
+        return {"batched_sentiment": True}
+
+    async def run_batch_process(self, state: AgentState) -> dict:
+        market_data = state.get("market_data")
+        if not market_data:
+            return {"error": "Market data not found"}
+
+        results = await self.batch_manager.process_batch()
         decisions = state.get("decisions", {})
-        decisions["sentiment"] = decision
+
+        if "technical" in results:
+            decision = self.technical_agent.create_decision(market_data, results["technical"])
+            decisions["technical"] = decision
+
+        if "sentiment" in results:
+            decision = self.sentiment_agent.create_decision(market_data, results["sentiment"])
+            decisions["sentiment"] = decision
+
         return {"decisions": decisions}
 
     async def run_risk_management(self, state: AgentState) -> dict:
@@ -90,7 +122,7 @@ class Orchestrator:
             return {"error": "Market data not found"}
 
         decision = await self.risk_agent.analyze(
-            market_data, decisions, portfolio_state
+            market_data, proposed_decisions=decisions, portfolio_state=portfolio_state
         )
         decisions["risk"] = decision
         return {"decisions": decisions}
@@ -103,7 +135,7 @@ class Orchestrator:
             return {"error": "Market data not found"}
 
         final_decision = await self.portfolio_agent.analyze(
-            market_data, decisions, portfolio_state
+            market_data, agent_decisions=decisions, portfolio_state=portfolio_state
         )
         return {"final_decision": final_decision}
 

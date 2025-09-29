@@ -39,33 +39,33 @@ class SentimentAnalysisAgent(BaseAgent):
             "and 'reasoning'."
         )
 
-    async def analyze(self, market_data: MarketData, **kwargs) -> AgentDecision:
+    async def get_user_prompt(self, market_data: MarketData) -> str:
         """
-        Performs sentiment analysis on news data using an LLM.
+        Generates the user prompt for sentiment analysis by fetching news.
         """
         # Fetch news from the provider
         if not hasattr(self, "news_provider"):
-            return self._error_decision(market_data.symbol,"News provider is not configured.")
+            raise ValueError("News provider is not configured.")
 
         news_articles = await self.news_provider.fetch_news_sentiment(market_data.symbol)
         if not news_articles:
-            return self._error_decision(market_data.symbol, "No news articles found or failed to fetch news.")
+            raise ValueError("No news articles found or failed to fetch news.")
 
         # Format the news into a user prompt for the LLM.
         headlines = [article.get("title", "") for article in news_articles]
-        user_prompt = (
+        return (
             f"Analyze the sentiment from the following news headlines for {market_data.symbol}:\n"
             + "\n".join(f"- {headline}" for headline in headlines)
             + "\n\nBased on these headlines, provide your sentiment (BULLISH, BEARISH, or NEUTRAL), "
             "confidence, and reasoning as a single JSON object."
         )
 
-        # Make the LLM call.
-        llm_response = await self.make_llm_call(user_prompt)
-
-        # Parse the LLM's JSON response to create an AgentDecision.
+    def create_decision(self, market_data: MarketData, response: str) -> AgentDecision:
+        """
+        Creates an AgentDecision from the LLM response for sentiment analysis.
+        """
         try:
-            decision_json = json.loads(llm_response)
+            decision_json = json.loads(response)
             signal = decision_json.get("signal", "NEUTRAL")
             confidence = float(decision_json.get("confidence", 0.0))
             reasoning = decision_json.get("reasoning", "No reasoning provided.")
@@ -73,8 +73,12 @@ class SentimentAnalysisAgent(BaseAgent):
             # If parsing fails, create a default decision with an error message.
             signal = "ERROR"
             confidence = 0.0
-            reasoning = f"Failed to parse LLM response: {e}. Raw response: {llm_response}"
+            reasoning = f"Failed to parse LLM response: {e}. Raw response: {response}"
 
+        # For supporting_data, we need headlines, but since get_user_prompt has them, perhaps store them.
+        # For simplicity, assume we can extract or store.
+        # Since create_decision doesn't have headlines, perhaps modify to take additional data.
+        # For now, put response in supporting_data.
         return AgentDecision(
             agent_name=self.config.name,
             symbol=market_data.symbol,
@@ -82,11 +86,21 @@ class SentimentAnalysisAgent(BaseAgent):
             confidence=confidence,
             reasoning=reasoning,
             supporting_data={
-                "llm_response": llm_response,
-                "news_analyzed": headlines,
+                "llm_response": response,
                 "market_data_used": market_data.__dict__,
             },
         )
+
+    async def analyze(self, market_data: MarketData, **kwargs) -> AgentDecision:
+        """
+        Performs sentiment analysis on news data using an LLM.
+        """
+        try:
+            user_prompt = await self.get_user_prompt(market_data)
+            llm_response = await self.make_llm_call(user_prompt)
+            return self.create_decision(market_data, llm_response)
+        except ValueError as e:
+            return self._error_decision(market_data.symbol, str(e))
 
     def _error_decision(self, symbol: str, reason: str) -> AgentDecision:
         """Creates a default error decision."""

@@ -7,7 +7,7 @@ It establishes a common interface for agent configuration, analysis, and
 interaction with the broader system.
 """
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, List
 
 from .data_structures import AgentConfig, AgentDecision, MarketData
 
@@ -67,6 +67,38 @@ class BaseAgent(ABC):
         pass
 
     @abstractmethod
+    async def get_user_prompt(self, market_data: MarketData) -> str:
+        """
+        Generates the user prompt for the given market data.
+
+        This method constructs the prompt that will be sent to the LLM for analysis.
+        May involve async operations like fetching external data.
+
+        Args:
+            market_data: The market data to generate a prompt for.
+
+        Returns:
+            A string containing the user prompt.
+        """
+        pass
+
+    @abstractmethod
+    def create_decision(self, market_data: MarketData, response: str) -> AgentDecision:
+        """
+        Creates an AgentDecision from the LLM response.
+
+        This method parses the LLM response and constructs a structured decision.
+
+        Args:
+            market_data: The market data that was analyzed.
+            response: The response from the LLM.
+
+        Returns:
+            An AgentDecision object.
+        """
+        pass
+
+    @abstractmethod
     def get_system_prompt(self) -> str:
         """
         Returns the system prompt for the agent's LLM.
@@ -97,3 +129,23 @@ class BaseAgent(ABC):
             prompt=user_prompt,
             system_prompt=self.get_system_prompt(),
         )
+
+    async def batch_analyze(self, market_data_list: List[MarketData], **kwargs) -> List[AgentDecision]:
+        """
+        Analyzes multiple market data instances in batch mode for optimized processing.
+
+        This method allows agents to process multiple market data points simultaneously
+        using batched LLM calls, reducing latency. Subclasses should override this
+        method to implement batch processing logic.
+
+        Args:
+            market_data_list: List of market data to analyze.
+            **kwargs: Additional arguments specific to the agent type.
+
+        Returns:
+            List of AgentDecision objects corresponding to each market data input.
+
+        Raises:
+            NotImplementedError: If the agent does not support batch analysis.
+        """
+        raise NotImplementedError("Batch analysis not implemented for this agent")

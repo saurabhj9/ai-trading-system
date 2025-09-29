@@ -66,9 +66,11 @@ This document outlines the high-level roadmap for the development of the AI Trad
         -   [x] **Data Pipeline Profiling:** Completed initial performance analysis of data fetching, caching, and indicator calculations
         -   [x] **LLM Client Profiling:** Completed performance analysis of LLM response times, token usage, and error handling
         -   [x] **Agent Processing Profiling:** Completed performance analysis of individual agent execution times and LLM call overhead
-        -   [x] **LLM Response Time Optimization:** Implemented caching, connection pooling, and parallel agent execution (reduced total processing time from ~40-50s to ~16.7s)
+        -   [x] **LLM Response Time Optimization:** Implemented caching, connection pooling, parallel agent execution, and request batching (62% reduction in LLM response time, 42% reduction in orchestrator execution time)
+        -   [x] **LLM Model Evaluation:** Completed comprehensive benchmarking of 8 models from 4 providers; selected Claude-3-haiku for optimal speed-quality balance
         -   [x] **Data Pipeline Optimization:** Added retry logic for data fetching and parallel multi-symbol fetching
         -   [x] **Agent Processing Parallelization:** Implemented parallel execution of independent agents (Technical/Sentiment)
+        -   [ ] **Prompt Engineering Optimization:** Refine agent prompts to address decision quality issues (e.g., oversold RSI misinterpretation in bearish scenarios)
         -   [ ] Conduct extensive backtesting with full agent logic and perform parameter tuning.
     -   [ ] **Monitoring & Reliability:**
         -   [ ] Enhance system monitoring with more detailed metrics and alerting.

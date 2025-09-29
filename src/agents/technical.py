@@ -28,12 +28,11 @@ class TechnicalAnalysisAgent(BaseAgent):
             "'signal', 'confidence', and 'reasoning'."
         )
 
-    async def analyze(self, market_data: MarketData, **kwargs) -> AgentDecision:
+    async def get_user_prompt(self, market_data: MarketData) -> str:
         """
-        Performs technical analysis on the given market data using an LLM.
+        Generates the user prompt for technical analysis.
         """
-        # 1. Format the market data into a user prompt for the LLM.
-        user_prompt = (
+        return (
             f"Analyze the following market data for {market_data.symbol}:\n"
             f"- Current Price: {market_data.price}\n"
             f"- Trading Volume: {market_data.volume}\n"
@@ -43,12 +42,12 @@ class TechnicalAnalysisAgent(BaseAgent):
             "as a single JSON object."
         )
 
-        # 2. Make the LLM call.
-        llm_response = await self.make_llm_call(user_prompt)
-
-        # 3. Parse the LLM's JSON response to create an AgentDecision.
+    def create_decision(self, market_data: MarketData, response: str) -> AgentDecision:
+        """
+        Creates an AgentDecision from the LLM response for technical analysis.
+        """
         try:
-            decision_json = json.loads(llm_response)
+            decision_json = json.loads(response)
             signal = decision_json.get("signal", "HOLD")
             confidence = float(decision_json.get("confidence", 0.0))
             reasoning = decision_json.get("reasoning", "No reasoning provided.")
@@ -56,7 +55,7 @@ class TechnicalAnalysisAgent(BaseAgent):
             # If parsing fails, create a default decision with an error message.
             signal = "ERROR"
             confidence = 0.0
-            reasoning = f"Failed to parse LLM response: {e}. Raw response: {llm_response}"
+            reasoning = f"Failed to parse LLM response: {e}. Raw response: {response}"
 
         return AgentDecision(
             agent_name=self.config.name,
@@ -65,7 +64,15 @@ class TechnicalAnalysisAgent(BaseAgent):
             confidence=confidence,
             reasoning=reasoning,
             supporting_data={
-                "llm_response": llm_response,
+                "llm_response": response,
                 "market_data_used": market_data.__dict__,
             },
         )
+
+    async def analyze(self, market_data: MarketData, **kwargs) -> AgentDecision:
+        """
+        Performs technical analysis on the given market data using an LLM.
+        """
+        user_prompt = await self.get_user_prompt(market_data)
+        llm_response = await self.make_llm_call(user_prompt)
+        return self.create_decision(market_data, llm_response)
