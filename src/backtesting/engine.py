@@ -37,6 +37,9 @@ class BacktestingEngine:
     def __init__(self):
         self.cerebro = bt.Cerebro()
         self.cerebro.addanalyzer(bt.analyzers.TradeAnalyzer, _name='trade_analyzer')
+        self.cerebro.addanalyzer(bt.analyzers.SharpeRatio, _name='sharpe')
+        self.cerebro.addanalyzer(bt.analyzers.DrawDown, _name='drawdown')
+        self.cerebro.addanalyzer(bt.analyzers.Returns, _name='returns')
 
     def run_backtest(self, data: pd.DataFrame, decisions: List[AgentDecision], initial_cash: float = 100000) -> Dict[str, Any]:
         """
@@ -66,10 +69,22 @@ class BacktestingEngine:
 
         trade_analysis = results[0].analyzers.trade_analyzer.get_analysis()
         total_trades = trade_analysis.get('total', {}).get('total', 0) if trade_analysis else 0
+        won_trades = trade_analysis.get('won', {}).get('total', 0) if trade_analysis else 0
+        lost_trades = trade_analysis.get('lost', {}).get('total', 0) if trade_analysis else 0
+        win_rate = (won_trades / total_trades * 100) if total_trades > 0 else 0
+
+        sharpe_analysis = results[0].analyzers.sharpe.get_analysis()
+        sharpe_ratio = sharpe_analysis.get('sharperatio', None)
+
+        drawdown_analysis = results[0].analyzers.drawdown.get_analysis()
+        max_drawdown = drawdown_analysis.get('max', {}).get('drawdown', 0) if drawdown_analysis else 0
 
         return {
             "initial_cash": initial_cash,
             "final_value": final_value,
             "total_return_pct": returns,
             "trades": total_trades,
+            "win_rate_pct": win_rate,
+            "sharpe_ratio": sharpe_ratio,
+            "max_drawdown_pct": max_drawdown,
         }

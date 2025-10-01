@@ -7,7 +7,7 @@ the data pipeline, and the orchestration layer.
 """
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from src.config.settings import settings
 
@@ -44,6 +44,11 @@ class MarketData:
         timestamp: The timestamp of when the data was captured.
         ohlc: A dictionary containing the Open, High, Low, and Close prices.
         technical_indicators: A dictionary of calculated technical indicators.
+        momentum_indicators: A dictionary of calculated momentum indicators.
+        mean_reversion_indicators: A dictionary of calculated mean reversion indicators.
+        historical_indicators: A list of dictionaries containing historical technical indicators.
+        historical_momentum: A list of dictionaries containing historical momentum indicators.
+        historical_mean_reversion: A list of dictionaries containing historical mean reversion indicators.
         fundamental_data: Optional dictionary of fundamental metrics.
     """
     symbol: str
@@ -52,6 +57,19 @@ class MarketData:
     timestamp: datetime
     ohlc: Dict[str, float]
     technical_indicators: Dict[str, float]
+    momentum_indicators: Dict[str, float] = field(default_factory=dict)
+    mean_reversion_indicators: Dict[str, float] = field(default_factory=dict)
+    volatility_indicators: Dict[str, float] = field(default_factory=dict)
+    trend_indicators: Dict[str, float] = field(default_factory=dict)
+    volume_indicators: Dict[str, float] = field(default_factory=dict)
+    statistical_indicators: Dict[str, float] = field(default_factory=dict)
+    historical_indicators: List[Dict[str, float]] = field(default_factory=list)
+    historical_momentum: List[Dict[str, float]] = field(default_factory=list)
+    historical_mean_reversion: List[Dict[str, float]] = field(default_factory=list)
+    historical_volatility: List[Dict[str, float]] = field(default_factory=list)
+    historical_trend: List[Dict[str, float]] = field(default_factory=list)
+    historical_volume: List[Dict[str, float]] = field(default_factory=list)
+    historical_statistical: List[Dict[str, float]] = field(default_factory=list)
     fundamental_data: Optional[Dict[str, Any]] = None
 
 @dataclass

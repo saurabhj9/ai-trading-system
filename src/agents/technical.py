@@ -21,23 +21,31 @@ class TechnicalAnalysisAgent(BaseAgent):
         """
         return (
             "You are a specialized AI assistant for financial technical analysis. "
-            "Your goal is to analyze the provided market data and technical indicators. "
-            "Determine a trading signal (BUY, SELL, or HOLD) and a confidence score (0.0 to 1.0). "
-            "You must provide your reasoning in a brief, data-driven explanation. "
-            "Your final output must be a single JSON object with three keys: "
-            "'signal', 'confidence', and 'reasoning'."
+            "Your goal is to analyze market data and technical indicators to determine a trading signal (BUY, SELL, or HOLD). "
+            "Provide a confidence score (0.0 to 1.0) and a brief, data-driven reasoning. "
+            "Key Indicator Interpretations: "
+            "- RSI (Relative Strength Index): An RSI below 30 is generally considered oversold and a potential BUY signal. An RSI above 70 is overbought and a potential SELL signal. "
+            "- MACD (Moving Average Convergence Divergence): A MACD line crossing above the signal line is a bullish (BUY) signal. A MACD line crossing below the signal line is a bearish (SELL) signal. "
+            "Analyze all provided indicators together for a comprehensive view. "
+            "When historical data is provided, look for trends (e.g., RSI improving from oversold levels) and divergences (e.g., price making new lows while RSI makes higher lows, indicating weakening downward momentum). "
+            "Your final output must be a single JSON object with three keys: 'signal', 'confidence', and 'reasoning'."
         )
 
     async def get_user_prompt(self, market_data: MarketData) -> str:
         """
         Generates the user prompt for technical analysis.
         """
+        historical_str = ""
+        if market_data.historical_indicators:
+            historical_str = f"- Historical Indicators (last {len(market_data.historical_indicators)} periods): {market_data.historical_indicators}\n"
+
         return (
             f"Analyze the following market data for {market_data.symbol}:\n"
             f"- Current Price: {market_data.price}\n"
             f"- Trading Volume: {market_data.volume}\n"
             f"- OHLC: {market_data.ohlc}\n"
-            f"- Technical Indicators: {market_data.technical_indicators}\n\n"
+            f"- Technical Indicators: {market_data.technical_indicators}\n"
+            f"{historical_str}\n"
             "Based on this data, provide your trading signal, confidence, and reasoning "
             "as a single JSON object."
         )
