@@ -98,3 +98,22 @@ docs/SIGNAL_VALIDATION_AND_CONFLICT_DESIGN_DESIGN.md
 docs/SIGNAL_VALIDATION_AND_CONFLICT_DETECTION_DESIGN.md
 docs/TECHNICAL_INDICATORS_PLAN.md
 docs/TODO.md
+
+# Temporary fix scripts
+*_fix.py
+apply_*.py
+update_*.py
+
+# Investigation and session reports
+*_REPORT.md
+*_FINDINGS.md
+*_COMPLETE.md
+*_APPLIED_*.md
+*_analysis.md
+performance_report.md
+
+# Test result and debugging files
+*_test_results*.json
+*_report_*.json
+test_*.json
+todo_*.txt
