@@ -134,6 +134,13 @@ class StockAnalyzer:
 
         # Add individual agent decisions
         for agent_name, decision in result.get("decisions", {}).items():
+            # Log warning if confidence is 0 (potential bug)
+            if decision.confidence == 0.0:
+                logger.warning(
+                    f"Agent '{agent_name}' returned 0% confidence. "
+                    f"Signal: {decision.signal}, Reasoning: {decision.reasoning[:100]}"
+                )
+
             formatted_result["agent_decisions"][agent_name] = {
                 "signal": decision.signal,
                 "confidence": decision.confidence,
