@@ -54,6 +54,8 @@ from src.cli.analyzer import StockAnalyzer
 from src.cli.formatter import OutputFormatter
 from src.utils.cli_logging import configure_cli_logging
 
+
+
 console = Console()
 formatter = OutputFormatter()
 
