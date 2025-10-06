@@ -72,10 +72,10 @@ class LLMClient:
         # Check cache first
         cached_response = self.cache.get(cache_key)
         if cached_response is not None:
-            print(f"LLM Cache HIT for key: {cache_key}")
+            logger.debug(f"LLM Cache HIT for key: {cache_key}")
             return cached_response
 
-        print(f"LLM Cache MISS for key: {cache_key}")
+        logger.debug(f"LLM Cache MISS for key: {cache_key}")
 
         # Generate response from LLM
         chat_completion = self.client.chat.completions.create(

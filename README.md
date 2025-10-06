@@ -115,7 +115,55 @@ Follow these instructions to get a copy of the project up and running on your lo
 
 ## Usage
 
-### Running the API Server
+### Command-Line Interface (CLI) - Recommended
+
+The fastest and easiest way to analyze stocks without needing to start a server:
+
+```sh
+# Analyze a single stock
+uv run cli.py AAPL
+
+# Analyze multiple stocks
+uv run cli.py AAPL GOOGL MSFT
+
+# Custom time period (90 days)
+uv run cli.py AAPL --days 90
+
+# JSON output
+uv run cli.py AAPL --format json
+
+# Save results to file
+uv run cli.py AAPL --output analysis.json
+
+# Watch mode (continuous monitoring every 5 minutes)
+uv run cli.py AAPL --watch --interval 300
+
+# Analyze from watchlist file
+uv run cli.py --watchlist examples/watchlist.txt
+```
+
+**Example Output:**
+```
+⏳ Analyzing AAPL...
+✓ Analysis complete for AAPL
+
+╭──────────────────────────────────────────────────────────╮
+│                  📊 AAPL Analysis                        │
+├──────────────────────────────────────────────────────────┤
+│ Signal: 🟢 BUY    Confidence: 85%                        │
+│                                                          │
+│ Analysis Period: 30 days                                 │
+│ (2025-09-06 to 2025-10-06)                              │
+│                                                          │
+│ Reasoning:                                               │
+│ Strong bullish momentum with positive technical         │
+│ indicators. RSI indicates good entry point.             │
+╰──────────────────────────────────────────────────────────╯
+```
+
+For more CLI options, run: `uv run cli.py --help`
+
+### Running the API Server (Alternative)
 
 The `main.py` script starts the FastAPI web server that provides API endpoints for generating trading signals:
 
@@ -133,7 +181,7 @@ INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
 
 The server will start and wait for API requests. No trading analysis is performed until you make specific API calls.
 
-### Generating Trading Signals
+### Generating Trading Signals via API
 
 Once the server is running, you can generate trading signals by making API requests:
 

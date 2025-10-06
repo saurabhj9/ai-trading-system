@@ -2,6 +2,7 @@
 name = "ai-trading-system"
 version = "0.1.0"
 description = "Multi-agent AI trading system"
+requires-python = ">=3.12"
 authors = [
     {name = "AI Developer", email = "ai.dev@example.com"}
 ]

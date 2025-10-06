@@ -1,0 +1,22 @@
+# AI Trading System - Example Watchlist
+# Add one stock symbol per line
+# Lines starting with # are comments
+
+# Tech Stocks
+AAPL
+GOOGL
+MSFT
+NVDA
+TSLA
+
+# Financial
+JPM
+BAC
+
+# Retail
+AMZN
+WMT
+
+# You can also specify custom days like this:
+# AAPL:90
+# GOOGL:60

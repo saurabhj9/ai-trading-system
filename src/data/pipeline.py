@@ -3,6 +3,7 @@ Data pipeline for fetching, processing, and enriching market data.
 """
 from datetime import datetime
 from typing import Optional, List
+import logging
 
 import pandas as pd
 import pandas_ta as ta
@@ -13,6 +14,8 @@ from src.agents.data_structures import MarketData
 from src.data.cache import CacheManager
 from src.data.providers.base_provider import BaseDataProvider
 from src.data.indicators_metadata import get_indicator_metadata
+
+logger = logging.getLogger(__name__)
 
 
 class DataPipeline:
@@ -55,7 +58,7 @@ class DataPipeline:
             # Check if we have enough data for indicator calculations
             min_periods = 20  # Maximum period required for our indicators
             if len(ohlcv_df) < min_periods:
-                print(f"DataPipeline: Insufficient data for {symbol}. Need at least {min_periods} periods, got {len(ohlcv_df)}")
+                logger.debug(f"Insufficient data for {symbol}. Need at least {min_periods} periods, got {len(ohlcv_df)}")
                 # Still calculate what we can with available data
 
             # Calculate existing technical indicators
@@ -78,7 +81,7 @@ class DataPipeline:
                 if len(ohlcv_df) >= 14:  # Minimum period for Stochastic
                     ohlcv_df.ta.stoch(k=14, d=3, smooth_k=3, append=True)
                 else:
-                    print(f"DataPipeline: Insufficient data for Stochastic Oscillator for {symbol}")
+                    logger.debug(f"Insufficient data for Stochastic Oscillator for {symbol}")
             except Exception as e:
                 print(f"DataPipeline: Error calculating Stochastic Oscillator for {symbol}: {e}")
 
@@ -87,7 +90,7 @@ class DataPipeline:
                 if len(ohlcv_df) >= 14:  # Minimum period for Williams %R
                     ohlcv_df.ta.willr(length=14, append=True)
                 else:
-                    print(f"DataPipeline: Insufficient data for Williams %R for {symbol}")
+                    logger.debug(f"Insufficient data for Williams %R for {symbol}")
             except Exception as e:
                 print(f"DataPipeline: Error calculating Williams %R for {symbol}: {e}")
 
@@ -96,7 +99,7 @@ class DataPipeline:
                 if len(ohlcv_df) >= 20:  # Minimum period for CCI
                     ohlcv_df.ta.cci(length=20, append=True)
                 else:
-                    print(f"DataPipeline: Insufficient data for CCI for {symbol}")
+                    logger.debug(f"Insufficient data for CCI for {symbol}")
             except Exception as e:
                 print(f"DataPipeline: Error calculating CCI for {symbol}: {e}")
 
@@ -109,7 +112,7 @@ class DataPipeline:
                     if all(col in ohlcv_df.columns for col in ['BBU_20_2.0_2.0', 'BBM_20_2.0_2.0', 'BBL_20_2.0_2.0']):
                         ohlcv_df['BBW_20_2.0_2.0'] = (ohlcv_df['BBU_20_2.0_2.0'] - ohlcv_df['BBL_20_2.0_2.0']) / ohlcv_df['BBM_20_2.0_2.0']
                 else:
-                    print(f"DataPipeline: Insufficient data for Bollinger Bands for {symbol}")
+                    logger.debug(f"Insufficient data for Bollinger Bands for {symbol}")
             except Exception as e:
                 print(f"DataPipeline: Error calculating Bollinger Bands for {symbol}: {e}")
 
@@ -118,7 +121,7 @@ class DataPipeline:
                 if len(ohlcv_df) >= 20:  # Minimum period for Keltner Channels
                     ohlcv_df.ta.kc(length=20, scalar=2, mamode='ema', append=True)
                 else:
-                    print(f"DataPipeline: Insufficient data for Keltner Channels for {symbol}")
+                    logger.debug(f"Insufficient data for Keltner Channels for {symbol}")
             except Exception as e:
                 print(f"DataPipeline: Error calculating Keltner Channels for {symbol}: {e}")
 
@@ -130,7 +133,7 @@ class DataPipeline:
                     ohlcv_df[f'DC_LOWER_{period}'] = ohlcv_df['Low'].rolling(window=period).min()
                     ohlcv_df[f'DC_MIDDLE_{period}'] = (ohlcv_df[f'DC_UPPER_{period}'] + ohlcv_df[f'DC_LOWER_{period}']) / 2
                 else:
-                    print(f"DataPipeline: Insufficient data for Donchian Channels for {symbol}")
+                    logger.debug(f"Insufficient data for Donchian Channels for {symbol}")
             except Exception as e:
                 print(f"DataPipeline: Error calculating Donchian Channels for {symbol}: {e}")
 
@@ -140,7 +143,7 @@ class DataPipeline:
                 if len(ohlcv_df) >= 14:  # Minimum period for ATR
                     ohlcv_df.ta.atr(length=14, append=True)
                 else:
-                    print(f"DataPipeline: Insufficient data for ATR for {symbol}")
+                    logger.debug(f"Insufficient data for ATR for {symbol}")
             except Exception as e:
                 print(f"DataPipeline: Error calculating ATR for {symbol}: {e}")
 
@@ -155,7 +158,7 @@ class DataPipeline:
                     # Clean up temporary column
                     ohlcv_df.drop('log_return', axis=1, inplace=True)
                 else:
-                    print(f"DataPipeline: Insufficient data for Historical Volatility for {symbol}")
+                    logger.debug(f"Insufficient data for Historical Volatility for {symbol}")
             except Exception as e:
                 print(f"DataPipeline: Error calculating Historical Volatility for {symbol}: {e}")
 
@@ -174,7 +177,7 @@ class DataPipeline:
                     # Clean up temporary columns
                     ohlcv_df.drop(['hl_spread', 'hl_spread_ema'], axis=1, inplace=True)
                 else:
-                    print(f"DataPipeline: Insufficient data for Chaikin Volatility for {symbol}")
+                    logger.debug(f"Insufficient data for Chaikin Volatility for {symbol}")
             except Exception as e:
                 print(f"DataPipeline: Error calculating Chaikin Volatility for {symbol}: {e}")
 
@@ -203,7 +206,7 @@ class DataPipeline:
                     ohlcv_df.ta.ema(length=5, append=True)
                     ohlcv_df.rename(columns={f"EMA_5": f"EMA_5"}, inplace=True)
                 else:
-                    print(f"DataPipeline: Insufficient data for EMAs for {symbol}")
+                    logger.debug(f"Insufficient data for EMAs for {symbol}")
             except Exception as e:
                 print(f"DataPipeline: Error calculating EMAs for {symbol}: {e}")
 
@@ -219,7 +222,7 @@ class DataPipeline:
                     if 'DMN_14' in ohlcv_df.columns:
                         ohlcv_df.rename(columns={"DMN_14": "DI_MINUS"}, inplace=True)
                 else:
-                    print(f"DataPipeline: Insufficient data for ADX for {symbol}")
+                    logger.debug(f"Insufficient data for ADX for {symbol}")
             except Exception as e:
                 print(f"DataPipeline: Error calculating ADX for {symbol}: {e}")
 
@@ -235,7 +238,7 @@ class DataPipeline:
                     if 'AROONOSC_14' in ohlcv_df.columns:
                         ohlcv_df.rename(columns={"AROONOSC_14": "AROON_OSC"}, inplace=True)
                 else:
-                    print(f"DataPipeline: Insufficient data for Aroon for {symbol}")
+                    logger.debug(f"Insufficient data for Aroon for {symbol}")
             except Exception as e:
                 print(f"DataPipeline: Error calculating Aroon for {symbol}: {e}")
 
@@ -260,7 +263,7 @@ class DataPipeline:
                     elif 'PSAR_SHORT' in ohlcv_df.columns:
                         ohlcv_df.rename(columns={"PSAR_SHORT": "PSAR"}, inplace=True)
                 else:
-                    print(f"DataPipeline: Insufficient data for Parabolic SAR for {symbol}")
+                    logger.debug(f"Insufficient data for Parabolic SAR for {symbol}")
             except Exception as e:
                 print(f"DataPipeline: Error calculating Parabolic SAR for {symbol}: {e}")
 
@@ -304,7 +307,7 @@ class DataPipeline:
                 if len(ohlcv_df) >= 14 and all(col in ohlcv_df.columns for col in ['Open', 'High', 'Low', 'Close', 'Volume']):
                     ohlcv_df.ta.mfi(length=14, append=True)
                 else:
-                    print(f"DataPipeline: Insufficient data or missing OHLCV for MFI calculation for {symbol}")
+                    logger.debug(f"Insufficient data or missing OHLCV for MFI calculation for {symbol}")
             except Exception as e:
                 print(f"DataPipeline: Error calculating MFI for {symbol}: {e}")
 
@@ -330,7 +333,7 @@ class DataPipeline:
                     if hurst_exponent is not None:
                         ohlcv_df['HURST'] = hurst_exponent
                 else:
-                    print(f"DataPipeline: Insufficient data for Hurst Exponent for {symbol}")
+                    logger.debug(f"Insufficient data for Hurst Exponent for {symbol}")
             except Exception as e:
                 print(f"DataPipeline: Error calculating Hurst Exponent for {symbol}: {e}")
 
@@ -344,7 +347,7 @@ class DataPipeline:
                     # Calculate Z-Score
                     ohlcv_df['Z_SCORE_20'] = (ohlcv_df['Close'] - rolling_mean) / rolling_std
                 else:
-                    print(f"DataPipeline: Insufficient data for Z-Score for {symbol}")
+                    logger.debug(f"Insufficient data for Z-Score for {symbol}")
             except Exception as e:
                 print(f"DataPipeline: Error calculating Z-Score for {symbol}: {e}")
 
@@ -359,7 +362,7 @@ class DataPipeline:
                         lambda x: x.autocorr(lag=1) if len(x) > 1 else np.nan, raw=False
                     )
                 else:
-                    print(f"DataPipeline: Insufficient data for Correlation analysis for {symbol}")
+                    logger.debug(f"Insufficient data for Correlation analysis for {symbol}")
             except Exception as e:
                 print(f"DataPipeline: Error calculating Correlation analysis for {symbol}: {e}")
 

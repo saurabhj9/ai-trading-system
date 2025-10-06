@@ -2,7 +2,10 @@
 In-memory cache manager with Time-To-Live (TTL) support.
 """
 import time
+import logging
 from typing import Any, Dict, Optional
+
+logger = logging.getLogger(__name__)
 
 
 class CacheManager:
@@ -31,7 +34,7 @@ class CacheManager:
 
         expires_at = time.time() + ttl_seconds
         self._cache[key] = {"value": value, "expires_at": expires_at}
-        print(f"Cache SET for key: {key} with TTL: {ttl_seconds}s")
+        logger.debug(f"Cache SET for key: {key} with TTL: {ttl_seconds}s")
 
     def get(self, key: str) -> Optional[Any]:
         """
@@ -45,7 +48,7 @@ class CacheManager:
         """
         item = self._cache.get(key)
         if item is None:
-            print(f"Cache MISS for key: {key}")
+            logger.debug(f"Cache MISS for key: {key}")
             return None
 
         if time.time() > item["expires_at"]:
@@ -54,7 +57,7 @@ class CacheManager:
             print(f"Cache EXPIRED for key: {key}")
             return None
 
-        print(f"Cache HIT for key: {key}")
+        logger.debug(f"Cache HIT for key: {key}")
         return item["value"]
 
     def clear(self):
