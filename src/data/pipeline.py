@@ -602,6 +602,7 @@ class DataPipeline:
         historical_trend = []
         historical_volume = []
         historical_statistical = []
+        historical_ohlc = []
         for idx, row in historical_data.iterrows():
             indicators = {}
             for key in indicator_keys:
@@ -700,6 +701,16 @@ class DataPipeline:
                         statistical['CORRELATION'] = row[key]
             historical_statistical.append(statistical)
 
+            # Collect historical OHLCV data for LocalSignalGenerator
+            ohlc_row = {
+                'open': row['Open'],
+                'high': row['High'],
+                'low': row['Low'],
+                'close': row['Close'],
+                'volume': row['Volume']
+            }
+            historical_ohlc.append(ohlc_row)
+
         market_data = MarketData(
             symbol=symbol,
             price=latest_data["Close"],
@@ -723,6 +734,7 @@ class DataPipeline:
             historical_volume=historical_volume,
             statistical_indicators=statistical_indicators,
             historical_statistical=historical_statistical,
+            historical_ohlc=historical_ohlc,
         )
 
         if self.cache:

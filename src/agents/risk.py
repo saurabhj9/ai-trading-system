@@ -65,8 +65,17 @@ class RiskManagementAgent(BaseAgent):
 
         # Perform quantitative risk calculations
         try:
+            # Calculate portfolio equity from cash and positions
+            cash = portfolio_state.get("cash", 0.0)
+            positions = portfolio_state.get("positions", {})
+            positions_value = sum(
+                pos.get("quantity", 0) * pos.get("current_price", 0)
+                for pos in positions.values()
+            )
+            portfolio_equity = cash + positions_value
+
             position_size = self._calculate_position_size(
-                portfolio_state.get("equity", 0),
+                portfolio_equity,
                 market_data.price
             )
             # Add quantitative metrics to the reasoning

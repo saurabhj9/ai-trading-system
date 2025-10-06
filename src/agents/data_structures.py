@@ -70,6 +70,7 @@ class MarketData:
     historical_trend: List[Dict[str, float]] = field(default_factory=list)
     historical_volume: List[Dict[str, float]] = field(default_factory=list)
     historical_statistical: List[Dict[str, float]] = field(default_factory=list)
+    historical_ohlc: List[Dict[str, Any]] = field(default_factory=list)
     fundamental_data: Optional[Dict[str, Any]] = None
 
 @dataclass

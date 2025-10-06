@@ -3,7 +3,7 @@ Unit tests for the TechnicalAnalysisAgent.
 """
 import asyncio
 from datetime import datetime
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, AsyncMock
 
 import pytest
 
@@ -20,7 +20,9 @@ def agent_config():
 @pytest.fixture
 def mock_llm_client():
     """Provides a mock LLM client."""
-    return MagicMock()
+    mock = MagicMock()
+    mock.generate = AsyncMock(return_value='{"signal": "BUY", "confidence": 0.75, "reasoning": "Test reasoning"}')
+    return mock
 
 
 @pytest.fixture
@@ -59,6 +61,7 @@ def sample_market_data():
     )
 
 
+@pytest.mark.unit
 @pytest.mark.asyncio
 async def test_analyze_returns_agent_decision(technical_agent, sample_market_data):
     """
@@ -76,6 +79,7 @@ async def test_analyze_returns_agent_decision(technical_agent, sample_market_dat
     assert isinstance(decision.reasoning, str)
 
 
+@pytest.mark.unit
 def test_get_system_prompt_returns_string(technical_agent):
     """
     Tests that get_system_prompt returns a non-empty string.

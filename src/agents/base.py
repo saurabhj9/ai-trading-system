@@ -7,7 +7,7 @@ It establishes a common interface for agent configuration, analysis, and
 interaction with the broader system.
 """
 from abc import ABC, abstractmethod
-from typing import Any, List
+from typing import Any, List, Optional
 
 from .data_structures import AgentConfig, AgentDecision, MarketData
 
@@ -111,7 +111,7 @@ class BaseAgent(ABC):
         """
         pass
 
-    async def make_llm_call(self, user_prompt: str) -> str:
+    async def make_llm_call(self, user_prompt: str, system_prompt: Optional[str] = None) -> str:
         """
         Makes a call to the language model with a given user prompt.
 
@@ -120,14 +120,16 @@ class BaseAgent(ABC):
 
         Args:
             user_prompt: The user-level prompt or query for the LLM.
+            system_prompt: An optional system prompt to override the default.
 
         Returns:
             The textual response from the language model.
         """
+        effective_system_prompt = system_prompt if system_prompt is not None else self.get_system_prompt()
         return await self.llm_client.generate(
             model=self.config.model_name,
             prompt=user_prompt,
-            system_prompt=self.get_system_prompt(),
+            system_prompt=effective_system_prompt,
         )
 
     async def batch_analyze(self, market_data_list: List[MarketData], **kwargs) -> List[AgentDecision]:

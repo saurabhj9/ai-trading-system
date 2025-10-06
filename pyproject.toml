@@ -39,6 +39,7 @@ dependencies = [
     "typer>=0.9.0",
     "langchain>=0.1.0",
     "langgraph>=0.0.30",
+    "pytest-asyncio>=1.1.0",
 ]
 
 [build-system]
@@ -67,4 +68,15 @@ packages = ["src"]
 [tool.pytest.ini_options]
 pythonpath = [
   "."
+]
+testpaths = [
+  "tests"
+]
+markers = [
+  "unit: Unit tests for individual components",
+  "integration: Integration tests for component interactions",
+  "e2e: End-to-end tests for complete workflows",
+  "performance: Performance and profiling tests",
+  "validation: Validation and quality tests",
+  "comparison: Comparison tests"
 ]

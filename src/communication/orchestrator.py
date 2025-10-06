@@ -2,7 +2,7 @@
 Orchestrates the workflow of the trading agents using LangGraph.
 """
 from datetime import datetime
-from typing import Dict, Any
+from typing import Dict, Any, List
 
 from langgraph.graph import StateGraph, END
 
@@ -25,6 +25,8 @@ class AgentState(dict):
     portfolio_state: Dict[str, Any]
     final_decision: AgentDecision
     error: str = ""
+    signal_sources: Dict[str, str] = {}  # Track signal sources (LOCAL, LLM, etc.)
+    performance_metrics: Dict[str, Any] = {}  # Track performance metrics
 
 
 class Orchestrator:
@@ -48,6 +50,16 @@ class Orchestrator:
         self.portfolio_agent = portfolio_agent
         self.state_manager = state_manager
         self.batch_manager = BatchRequestManager(technical_agent.llm_client)
+
+        # Track signal generation metrics
+        self.orchestrator_metrics = {
+            "total_workflows": 0,
+            "local_signal_workflows": 0,
+            "llm_signal_workflows": 0,
+            "hybrid_workflows": 0,
+            "workflow_errors": 0,
+        }
+
         self.workflow = self._build_graph()
 
     def _build_graph(self):
@@ -73,6 +85,35 @@ class Orchestrator:
         if not market_data:
             return {"error": "Market data not found"}
 
+        # Check if we should use local signal generation
+        use_local = self.technical_agent._should_use_local_generation(market_data)
+
+        if use_local and self.technical_agent.local_signal_generator:
+            # Generate local signal directly
+            try:
+                decision = await self.technical_agent._generate_local_signal(market_data)
+                decisions = state.get("decisions", {})
+                decisions["technical"] = decision
+
+                # Track signal source
+                signal_sources = state.get("signal_sources", {})
+                signal_sources["technical"] = "LOCAL"
+
+                # Update orchestrator metrics
+                self.orchestrator_metrics["local_signal_workflows"] += 1
+
+                return {
+                    "decisions": decisions,
+                    "signal_sources": signal_sources,
+                    "batched_technical": False  # Not batched, processed directly
+                }
+            except Exception as e:
+                print(f"Error in local signal generation: {e}")
+                if not settings.signal_generation.FALLBACK_TO_LLM_ON_ERROR:
+                    return {"error": f"Local signal generation failed: {e}"}
+                # Fall through to LLM processing
+
+        # Use LLM-based processing (original workflow)
         user_prompt = await self.technical_agent.get_user_prompt(market_data)
         await self.batch_manager.add_request(
             "technical",
@@ -80,6 +121,10 @@ class Orchestrator:
             user_prompt,
             self.technical_agent.get_system_prompt()
         )
+
+        # Update orchestrator metrics
+        self.orchestrator_metrics["llm_signal_workflows"] += 1
+
         return {"batched_technical": True}
 
     async def run_sentiment_analysis(self, state: AgentState) -> dict:
@@ -101,18 +146,40 @@ class Orchestrator:
         if not market_data:
             return {"error": "Market data not found"}
 
-        results = await self.batch_manager.process_batch()
         decisions = state.get("decisions", {})
+        signal_sources = state.get("signal_sources", {})
 
-        if "technical" in results:
+        # Process all queued LLM batch requests in a single batch call
+        # This handles both technical (if not local) and sentiment analysis
+        results = await self.batch_manager.process_batch()
+
+        # Process technical analysis result if it came from LLM batch
+        if "technical" not in decisions and "technical" in results:
             decision = self.technical_agent.create_decision(market_data, results["technical"])
             decisions["technical"] = decision
+            signal_sources["technical"] = "LLM"
+        elif "technical" in decisions and "technical" not in signal_sources:
+            # Technical was already processed locally
+            signal_sources["technical"] = "LOCAL"
 
-        if "sentiment" in results:
+        # Process sentiment analysis result
+        if "sentiment" not in decisions and "sentiment" in results:
             decision = self.sentiment_agent.create_decision(market_data, results["sentiment"])
             decisions["sentiment"] = decision
+            signal_sources["sentiment"] = "LLM"
 
-        return {"decisions": decisions}
+        # Check for hybrid mode escalations
+        if "technical" in decisions:
+            tech_decision = decisions["technical"]
+            if "escalation_info" in tech_decision.supporting_data:
+                # This was an escalated decision from local to LLM
+                signal_sources["technical"] = "ESCALATED"
+                self.orchestrator_metrics["hybrid_workflows"] += 1
+
+        return {
+            "decisions": decisions,
+            "signal_sources": signal_sources
+        }
 
     async def run_risk_management(self, state: AgentState) -> dict:
         market_data = state.get("market_data")
@@ -137,7 +204,14 @@ class Orchestrator:
         final_decision = await self.portfolio_agent.analyze(
             market_data, agent_decisions=decisions, portfolio_state=portfolio_state
         )
-        return {"final_decision": final_decision}
+
+        # Add portfolio decision to decisions dict so it appears in API response
+        decisions["portfolio"] = final_decision
+
+        return {
+            "decisions": decisions,
+            "final_decision": final_decision
+        }
 
     async def run(
         self, symbol: str, start_date: datetime, end_date: datetime
@@ -146,6 +220,7 @@ class Orchestrator:
             symbol, start_date, end_date
         )
         if not market_data:
+            self.orchestrator_metrics["workflow_errors"] += 1
             return AgentState(error=f"Failed to fetch data for {symbol}")
 
         portfolio_state = self.state_manager.get_portfolio_state() or {
@@ -155,8 +230,70 @@ class Orchestrator:
         initial_state = AgentState(
             market_data=market_data,
             decisions={},
-            portfolio_state=portfolio_state
+            portfolio_state=portfolio_state,
+            signal_sources={},
+            performance_metrics={}
         )
 
-        final_state_dict = await self.workflow.ainvoke(initial_state)
-        return AgentState(final_state_dict)
+        try:
+            # Update total workflows counter
+            self.orchestrator_metrics["total_workflows"] += 1
+
+            final_state_dict = await self.workflow.ainvoke(initial_state)
+            final_state = AgentState(final_state_dict)
+
+            # Add performance metrics to the final state
+            final_state["performance_metrics"] = {
+                "orchestrator_metrics": self.orchestrator_metrics.copy(),
+                "technical_agent_metrics": self.technical_agent.get_performance_metrics() if hasattr(self.technical_agent, 'get_performance_metrics') else {},
+            }
+
+            return final_state
+
+        except Exception as e:
+            self.orchestrator_metrics["workflow_errors"] += 1
+            return AgentState(error=f"Workflow execution failed: {e}")
+
+    def get_orchestrator_metrics(self) -> Dict[str, Any]:
+        """
+        Get orchestrator performance metrics.
+
+        Returns:
+            Dict[str, Any]: Orchestrator metrics including signal source distribution
+        """
+        metrics = self.orchestrator_metrics.copy()
+
+        # Add calculated metrics
+        if metrics["total_workflows"] > 0:
+            metrics["local_signal_percentage"] = (
+                metrics["local_signal_workflows"] / metrics["total_workflows"] * 100
+            )
+            metrics["llm_signal_percentage"] = (
+                metrics["llm_signal_workflows"] / metrics["total_workflows"] * 100
+            )
+            metrics["hybrid_percentage"] = (
+                metrics["hybrid_workflows"] / metrics["total_workflows"] * 100
+            )
+            metrics["error_rate"] = (
+                metrics["workflow_errors"] / metrics["total_workflows"] * 100
+            )
+
+        # Add technical agent metrics
+        if hasattr(self.technical_agent, 'get_performance_metrics'):
+            metrics["technical_agent_metrics"] = self.technical_agent.get_performance_metrics()
+
+        return metrics
+
+    def reset_orchestrator_metrics(self):
+        """Reset orchestrator metrics."""
+        self.orchestrator_metrics = {
+            "total_workflows": 0,
+            "local_signal_workflows": 0,
+            "llm_signal_workflows": 0,
+            "hybrid_workflows": 0,
+            "workflow_errors": 0,
+        }
+
+        # Reset technical agent metrics
+        if hasattr(self.technical_agent, 'reset_performance_metrics'):
+            self.technical_agent.reset_performance_metrics()

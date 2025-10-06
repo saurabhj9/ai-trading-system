@@ -12,22 +12,26 @@ def state_manager():
     return StateManager()
 
 
+@pytest.mark.unit
 def test_initial_state_is_empty(state_manager):
     """Tests that the initial state is empty."""
     assert state_manager.get("some_key") is None
 
 
+@pytest.mark.unit
 def test_set_and_get(state_manager):
     """Tests the basic set and get functionality."""
     state_manager.set("my_key", "my_value")
     assert state_manager.get("my_key") == "my_value"
 
 
+@pytest.mark.unit
 def test_get_nonexistent_key_returns_none(state_manager):
     """Tests that getting a non-existent key returns None."""
     assert state_manager.get("non_existent_key") is None
 
 
+@pytest.mark.unit
 def test_set_and_get_portfolio_state(state_manager):
     """Tests the portfolio-specific getter and setter."""
     portfolio = {"cash": 100000, "positions": {"AAPL": 100}}
@@ -35,6 +39,7 @@ def test_set_and_get_portfolio_state(state_manager):
     assert state_manager.get_portfolio_state() == portfolio
 
 
+@pytest.mark.unit
 def test_set_and_get_agent_decision(state_manager):
     """Tests the agent decision-specific getter and setter."""
     decision = {"signal": "BUY", "confidence": 0.8}
