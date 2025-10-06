@@ -43,16 +43,16 @@ from typing import List
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent))
 
+# Load environment variables FIRST before any imports that use settings
 from dotenv import load_dotenv
+load_dotenv()
+
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TimeElapsedColumn
 
 from src.cli.analyzer import StockAnalyzer
 from src.cli.formatter import OutputFormatter
 from src.utils.cli_logging import configure_cli_logging
-
-# Load environment variables
-load_dotenv()
 
 console = Console()
 formatter = OutputFormatter()
