@@ -7,7 +7,7 @@ calculating metrics like Value at Risk (VaR) and position sizing.
 import json
 from typing import Any, Dict
 
-from .base import BaseAgent
+from .base import BaseAgent, clean_json_response
 from .data_structures import AgentDecision, MarketData
 
 
@@ -53,7 +53,9 @@ class RiskManagementAgent(BaseAgent):
         portfolio_state = kwargs.get("portfolio_state", {})
 
         try:
-            decision_json = json.loads(response)
+            # Clean the response to handle control characters
+            cleaned_response = clean_json_response(response)
+            decision_json = json.loads(cleaned_response)
             signal = decision_json.get("signal", "REJECT")
             confidence = float(decision_json.get("confidence", 0.0))
             reasoning = decision_json.get("reasoning", "No reasoning provided.")

@@ -109,9 +109,9 @@ Follow these instructions to get a copy of the project up and running on your lo
         ```sh
         cp .env.example .env
         ```
-    -   Open the `.env` file and add your API keys. At a minimum, you need to set:
-        -   `OPENROUTER_API_KEY`: Your API key for OpenRouter.
-        -   `DATA_ALPHA_VANTAGE_API_KEY`: Your API key for Alpha Vantage.
+    -   Open the `.env` file and add your API keys. **Both keys are required**:
+        -   `OPENROUTER_API_KEY`: **[REQUIRED]** Your API key for OpenRouter (AI-powered analysis). Get your key at: https://openrouter.ai/keys
+        -   `DATA_ALPHA_VANTAGE_API_KEY`: **[REQUIRED]** Your API key for Alpha Vantage (real-time news sentiment). Get a free key at: https://www.alphavantage.co/support/#api-key (free tier: 25 API calls per day)
 
 ## Usage
 

@@ -16,7 +16,7 @@ from ..config.settings import settings
 from ..signal_generation.signal_generator import LocalSignalGenerator
 from ..signal_generation.core import Signal, SignalType
 from ..config.signal_generation import signal_generation_config
-from .base import BaseAgent
+from .base import BaseAgent, clean_json_response
 from .data_structures import AgentDecision, MarketData
 
 
@@ -125,7 +125,9 @@ class TechnicalAnalysisAgent(BaseAgent):
         Creates an AgentDecision from the LLM response for technical analysis.
         """
         try:
-            decision_json = json.loads(response)
+            # Clean the response to handle control characters
+            cleaned_response = clean_json_response(response)
+            decision_json = json.loads(cleaned_response)
             signal = decision_json.get("signal", "HOLD")
             confidence = float(decision_json.get("confidence", 0.0))
             reasoning = decision_json.get("reasoning", "No reasoning provided.")

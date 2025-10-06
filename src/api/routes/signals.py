@@ -38,7 +38,11 @@ def get_orchestrator():
     yfinance_provider = YFinanceProvider(rate_limit=10, period=60.0)
     alpha_vantage_api_key = os.getenv("DATA_ALPHA_VANTAGE_API_KEY")
     if not alpha_vantage_api_key:
-        raise ValueError("ALPHA_VANTAGE_API_KEY environment variable not set.")
+        raise ValueError(
+            "DATA_ALPHA_VANTAGE_API_KEY environment variable is required for sentiment analysis. "
+            "Please set it in your .env file. "
+            "Get your free API key at: https://www.alphavantage.co/support/#api-key"
+        )
     alpha_vantage_provider = AlphaVantageProvider(api_key=alpha_vantage_api_key)
 
     # Initialize data pipeline (uses yfinance for market data)

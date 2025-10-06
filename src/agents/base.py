@@ -8,8 +8,44 @@ interaction with the broader system.
 """
 from abc import ABC, abstractmethod
 from typing import Any, List, Optional
+import re
 
 from .data_structures import AgentConfig, AgentDecision, MarketData
+
+
+def clean_json_response(response: str) -> str:
+    """
+    Clean up JSON response from LLM to handle control characters.
+
+    LLMs sometimes return JSON with unescaped newlines or other control
+    characters that cause JSON parsing to fail. This function cleans them up.
+
+    Args:
+        response: Raw JSON string from LLM
+
+    Returns:
+        Cleaned JSON string safe for parsing
+    """
+    # Remove any leading/trailing whitespace
+    response = response.strip()
+
+    # Try to extract JSON object if wrapped in markdown code blocks
+    json_match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', response, re.DOTALL)
+    if json_match:
+        response = json_match.group(1)
+
+    # Replace actual newlines within string values with escaped newlines
+    # This is a simple heuristic - finds content between quotes and escapes newlines
+    def escape_newlines_in_strings(match):
+        content = match.group(1)
+        # Escape newlines and other control characters
+        content = content.replace('\n', '\\n').replace('\r', '\\r').replace('\t', '\\t')
+        return f'"{content}"'
+
+    # Match string values in JSON (quoted content)
+    response = re.sub(r'"([^"]*)"', escape_newlines_in_strings, response, flags=re.DOTALL)
+
+    return response
 
 
 class BaseAgent(ABC):

@@ -46,10 +46,13 @@ class StockAnalyzer:
         alpha_vantage_api_key = os.getenv("DATA_ALPHA_VANTAGE_API_KEY")
 
         if not alpha_vantage_api_key:
-            logger.warning("ALPHA_VANTAGE_API_KEY not set, sentiment analysis may be limited")
-            alpha_vantage_provider = None
-        else:
-            alpha_vantage_provider = AlphaVantageProvider(api_key=alpha_vantage_api_key)
+            raise ValueError(
+                "DATA_ALPHA_VANTAGE_API_KEY is required for sentiment analysis.\n"
+                "Please set it in your .env file to fetch real news data.\n"
+                "Get your free API key at: https://www.alphavantage.co/support/#api-key"
+            )
+
+        alpha_vantage_provider = AlphaVantageProvider(api_key=alpha_vantage_api_key)
 
         # Initialize data pipeline
         data_pipeline = DataPipeline(provider=yfinance_provider, cache=CacheManager())

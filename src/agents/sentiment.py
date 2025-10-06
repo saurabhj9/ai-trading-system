@@ -7,7 +7,7 @@ news articles, social media, and financial news sources.
 import json
 from typing import List, Dict, Any
 
-from .base import BaseAgent
+from .base import BaseAgent, clean_json_response
 from .data_structures import AgentDecision, MarketData
 from ..config.settings import settings
 
@@ -19,12 +19,15 @@ class SentimentAnalysisAgent(BaseAgent):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Initialize news provider if API key is available
-        if settings.data.ALPHA_VANTAGE_API_KEY:
-            from src.data.providers.alpha_vantage_provider import AlphaVantageProvider
-            self.news_provider = AlphaVantageProvider(settings.data.ALPHA_VANTAGE_API_KEY)
-        else:
-            self.news_provider = MockNewsProvider()
+        # Require Alpha Vantage API key for sentiment analysis
+        if not settings.data.ALPHA_VANTAGE_API_KEY:
+            raise ValueError(
+                "DATA_ALPHA_VANTAGE_API_KEY is required for sentiment analysis. "
+                "Please set it in your .env file to fetch real news data. "
+                "Get your free API key at: https://www.alphavantage.co/support/#api-key"
+            )
+        from src.data.providers.alpha_vantage_provider import AlphaVantageProvider
+        self.news_provider = AlphaVantageProvider(settings.data.ALPHA_VANTAGE_API_KEY)
 
     def get_system_prompt(self) -> str:
         """
@@ -65,7 +68,9 @@ class SentimentAnalysisAgent(BaseAgent):
         Creates an AgentDecision from the LLM response for sentiment analysis.
         """
         try:
-            decision_json = json.loads(response)
+            # Clean the response to handle control characters
+            cleaned_response = clean_json_response(response)
+            decision_json = json.loads(cleaned_response)
             signal = decision_json.get("signal", "NEUTRAL")
             confidence = float(decision_json.get("confidence", 0.0))
             reasoning = decision_json.get("reasoning", "No reasoning provided.")
@@ -111,15 +116,3 @@ class SentimentAnalysisAgent(BaseAgent):
             confidence=0.0,
             reasoning=reason,
         )
-
-
-class MockNewsProvider:
-    """Mock news provider for testing when API key is not available."""
-
-    async def fetch_news_sentiment(self, symbol: str) -> List[Dict[str, Any]]:
-        """Returns mock news articles."""
-        return [
-            {"title": f"Positive market outlook for {symbol}"},
-            {"title": f"Analysts bullish on {symbol} performance"},
-            {"title": f"{symbol} shows strong quarterly results"},
-        ]
