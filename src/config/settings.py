@@ -77,10 +77,8 @@ class SignalGenerationSettings(BaseSettings):
     ENABLE_SIDE_BY_SIDE_COMPARISON: bool = False  # Generate both local and LLM signals for comparison
     COMPARISON_SAMPLE_RATE: float = 0.1  # Percentage of requests to sample for comparison (0.0-1.0)
 
-    # Escalation settings
-    ESCALATION_ENABLED: bool = True  # Enable escalation to LLM for complex cases
+    # Escalation settings (only used when HYBRID_MODE_ENABLED=True)
     ESCALATION_CONFIDENCE_THRESHOLD: float = 0.3  # Escalate if local confidence is below this
-    ESCALATION_CONFLICT_THRESHOLD: int = 2  # Escalate if this many conflicts are detected
 
     # Performance monitoring
     TRACK_PERFORMANCE_METRICS: bool = True  # Track performance comparison metrics

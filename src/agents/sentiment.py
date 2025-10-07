@@ -52,7 +52,8 @@ class SentimentAnalysisAgent(BaseAgent):
 
         news_articles = await self.news_provider.fetch_news_sentiment(market_data.symbol)
         if not news_articles:
-            raise ValueError("No news articles found or failed to fetch news.")
+            # Return None to signal that we should use a default neutral decision
+            return None
 
         # Format the news into a user prompt for the LLM.
         headlines = [article.get("title", "") for article in news_articles]
@@ -102,6 +103,18 @@ class SentimentAnalysisAgent(BaseAgent):
         """
         try:
             user_prompt = await self.get_user_prompt(market_data)
+
+            # If no news available (API rate limit or fetch failure), return neutral decision
+            if user_prompt is None:
+                return AgentDecision(
+                    agent_name=self.config.name,
+                    symbol=market_data.symbol,
+                    signal="NEUTRAL",
+                    confidence=0.5,
+                    reasoning="No news articles available (API rate limit or fetch failure). Defaulting to NEUTRAL sentiment.",
+                    supporting_data={"news_unavailable": True}
+                )
+
             llm_response = await self.make_llm_call(user_prompt)
             return self.create_decision(market_data, llm_response)
         except ValueError as e:

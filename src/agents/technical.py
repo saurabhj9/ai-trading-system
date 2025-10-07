@@ -340,7 +340,7 @@ class TechnicalAnalysisAgent(BaseAgent):
                 # Try local generation first
                 local_decision = await self._generate_local_signal(market_data)
 
-                # Check if we should escalate to LLM based on confidence or conflicts
+                # Check if we should escalate to LLM based on confidence
                 should_escalate = False
                 escalation_reason = ""
 
@@ -348,16 +348,11 @@ class TechnicalAnalysisAgent(BaseAgent):
                 if local_decision.confidence < settings.signal_generation.ESCALATION_CONFIDENCE_THRESHOLD:
                     should_escalate = True
                     escalation_reason = f"Low confidence ({local_decision.confidence:.2f} < {settings.signal_generation.ESCALATION_CONFIDENCE_THRESHOLD})"
+                    logger.info(f"Triggering escalation: {escalation_reason}")
 
-                # Check for conflicts in metadata
-                if "conflicts" in local_decision.supporting_data.get("signal_metadata", {}):
-                    conflicts = local_decision.supporting_data["signal_metadata"]["conflicts"]
-                    if len(conflicts) >= settings.signal_generation.ESCALATION_CONFLICT_THRESHOLD:
-                        should_escalate = True
-                        escalation_reason = f"Too many conflicts ({len(conflicts)} >= {settings.signal_generation.ESCALATION_CONFLICT_THRESHOLD})"
-
-                # Escalate if needed
-                if should_escalate and settings.signal_generation.ESCALATION_ENABLED:
+                # Escalate if needed (hybrid mode implies escalation is enabled)
+                if should_escalate:
+                    logger.info(f"Escalating to LLM for {market_data.symbol}")
                     self.performance_metrics["escalations"] += 1
                     llm_decision = await self._generate_llm_signal(market_data)
 

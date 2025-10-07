@@ -85,47 +85,34 @@ class Orchestrator:
         if not market_data:
             return {"error": "Market data not found"}
 
-        # Check if we should use local signal generation
-        use_local = self.technical_agent._should_use_local_generation(market_data)
+        # Delegate to the agent's analyze method which handles local/hybrid/LLM logic
+        try:
+            decision = await self.technical_agent.analyze(market_data)
+            decisions = state.get("decisions", {})
+            decisions["technical"] = decision
 
-        if use_local and self.technical_agent.local_signal_generator:
-            # Generate local signal directly
-            try:
-                decision = await self.technical_agent._generate_local_signal(market_data)
-                decisions = state.get("decisions", {})
-                decisions["technical"] = decision
+            # Track signal source from decision metadata
+            signal_sources = state.get("signal_sources", {})
+            signal_source = decision.supporting_data.get("signal_source", "UNKNOWN")
+            signal_sources["technical"] = signal_source
 
-                # Track signal source
-                signal_sources = state.get("signal_sources", {})
-                signal_sources["technical"] = "LOCAL"
-
-                # Update orchestrator metrics
+            # Update orchestrator metrics based on source
+            if signal_source == "LOCAL":
                 self.orchestrator_metrics["local_signal_workflows"] += 1
+            elif signal_source == "LLM":
+                self.orchestrator_metrics["llm_signal_workflows"] += 1
+            elif "escalation_info" in decision.supporting_data:
+                # This was escalated from local to LLM
+                self.orchestrator_metrics["hybrid_workflows"] += 1
 
-                return {
-                    "decisions": decisions,
-                    "signal_sources": signal_sources,
-                    "batched_technical": False  # Not batched, processed directly
-                }
-            except Exception as e:
-                print(f"Error in local signal generation: {e}")
-                if not settings.signal_generation.FALLBACK_TO_LLM_ON_ERROR:
-                    return {"error": f"Local signal generation failed: {e}"}
-                # Fall through to LLM processing
-
-        # Use LLM-based processing (original workflow)
-        user_prompt = await self.technical_agent.get_user_prompt(market_data)
-        await self.batch_manager.add_request(
-            "technical",
-            self.technical_agent.config.model_name,
-            user_prompt,
-            self.technical_agent.get_system_prompt()
-        )
-
-        # Update orchestrator metrics
-        self.orchestrator_metrics["llm_signal_workflows"] += 1
-
-        return {"batched_technical": True}
+            return {
+                "decisions": decisions,
+                "signal_sources": signal_sources,
+                "batched_technical": False  # Processed directly via analyze()
+            }
+        except Exception as e:
+            print(f"Error in technical analysis: {e}")
+            return {"error": f"Technical analysis failed: {e}"}
 
     async def run_sentiment_analysis(self, state: AgentState) -> dict:
         market_data = state.get("market_data")

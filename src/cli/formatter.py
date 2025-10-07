@@ -121,12 +121,27 @@ class OutputFormatter:
 
             for agent_name, decision in result["agent_decisions"].items():
                 agent_signal = decision["signal"]
+
+                # Color-code based on signal type and agent
                 if agent_signal == "BUY":
                     signal_text = "[green]BUY[/green]"
                 elif agent_signal == "SELL":
                     signal_text = "[red]SELL[/red]"
-                else:
+                elif agent_signal == "HOLD":
                     signal_text = "[yellow]HOLD[/yellow]"
+                elif agent_signal == "BULLISH":
+                    signal_text = "[green]BULLISH[/green]"
+                elif agent_signal == "BEARISH":
+                    signal_text = "[red]BEARISH[/red]"
+                elif agent_signal == "NEUTRAL":
+                    signal_text = "[yellow]NEUTRAL[/yellow]"
+                elif agent_signal == "APPROVE":
+                    signal_text = "[green]APPROVE[/green]"
+                elif agent_signal == "REJECT":
+                    signal_text = "[red]REJECT[/red]"
+                else:
+                    # Fallback for any unknown signal type
+                    signal_text = f"[dim]{agent_signal}[/dim]"
 
                 agent_table.add_row(
                     agent_name.capitalize(),
