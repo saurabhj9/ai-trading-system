@@ -16,8 +16,11 @@ from ..config.settings import settings
 from ..signal_generation.signal_generator import LocalSignalGenerator
 from ..signal_generation.core import Signal, SignalType
 from ..config.signal_generation import signal_generation_config
+from ..utils.logging import get_logger
 from .base import BaseAgent, clean_json_response
 from .data_structures import AgentDecision, MarketData
+
+logger = get_logger(__name__)
 
 
 class TechnicalAnalysisAgent(BaseAgent):
@@ -211,9 +214,23 @@ class TechnicalAnalysisAgent(BaseAgent):
             df = pd.DataFrame(market_data.historical_ohlc)
             df = df.astype({'open': 'float64', 'high': 'float64', 'low': 'float64', 'close': 'float64', 'volume': 'float64'})
             df.index = pd.to_datetime(df.index)
+
+            # Log for debugging
+            logger.debug(
+                f"Local signal generation using {len(df)} periods of data for {market_data.symbol}"
+            )
+
+            # Warn if insufficient data
+            if len(df) < 100:
+                logger.warning(
+                    f"Only {len(df)} periods available for local generation "
+                    f"(need 100+). This may cause analysis to fail or fallback to LLM."
+                )
+
             return df
 
         # If no historical data, create a single-row DataFrame with current data
+        logger.warning(f"No historical_ohlc data available for {market_data.symbol}, using current data only")
         current_data = {
             'open': [market_data.ohlc.get('open', market_data.price)],
             'high': [market_data.ohlc.get('high', market_data.price)],
@@ -403,14 +420,46 @@ class TechnicalAnalysisAgent(BaseAgent):
         # Convert market data to DataFrame format
         df = self._convert_market_data_to_dataframe(market_data)
 
+        # Check minimum data requirement
+        MIN_REQUIRED = 100
+        if len(df) < MIN_REQUIRED:
+            error_msg = (
+                f"Insufficient data for local signal generation: {len(df)} periods "
+                f"(minimum required: {MIN_REQUIRED}). "
+            )
+            logger.error(error_msg)
+
+            # Trigger fallback if enabled
+            if settings.signal_generation.FALLBACK_TO_LLM_ON_ERROR:
+                logger.info(f"Falling back to LLM for {market_data.symbol}")
+                raise ValueError(error_msg)  # Exception triggers fallback
+            else:
+                # Return error decision
+                logger.error("Fallback disabled, returning error signal")
+                return AgentDecision(
+                    agent_name=self.config.name,
+                    symbol=market_data.symbol,
+                    signal="HOLD",
+                    confidence=0.0,
+                    reasoning=f"{error_msg}Enable fallback or use --days 200+ for local generation.",
+                    supporting_data={"error": "insufficient_data", "periods": len(df)}
+                )
+
         # Generate signal using LocalSignalGenerator
-        signal, metadata = self.local_signal_generator.generate_signal(df, market_data.symbol)
+        try:
+            signal, metadata = self.local_signal_generator.generate_signal(df, market_data.symbol)
+        except Exception as e:
+            logger.error(f"Local signal generation failed: {e}")
+            if settings.signal_generation.FALLBACK_TO_LLM_ON_ERROR:
+                raise  # Re-raise to trigger fallback
+            return self._create_error_decision(market_data, str(e))
 
         # Convert to AgentDecision
         decision = self._convert_signal_to_decision(signal, market_data, "LOCAL")
 
         # Add metadata
         decision.supporting_data["local_generation_metadata"] = metadata
+        decision.supporting_data["data_periods_used"] = len(df)
 
         return decision
 

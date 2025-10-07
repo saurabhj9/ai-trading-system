@@ -216,8 +216,16 @@ class Orchestrator:
     async def run(
         self, symbol: str, start_date: datetime, end_date: datetime
     ) -> AgentState:
+        # Calculate days requested by user
+        days_requested = (end_date - start_date).days
+
+        # Use all requested days for historical data
+        # (with minimum for indicators that need baseline)
+        historical_periods = max(days_requested, 30)  # Min 30 for indicator calculations
+
         market_data = await self.data_pipeline.fetch_and_process_data(
-            symbol, start_date, end_date
+            symbol, start_date, end_date,
+            historical_periods=historical_periods  # Pass full period instead of default 10
         )
         if not market_data:
             self.orchestrator_metrics["workflow_errors"] += 1
