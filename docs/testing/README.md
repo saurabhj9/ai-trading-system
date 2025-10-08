@@ -445,6 +445,16 @@ pytest -x tests/unit/
 pytest -vv tests/unit/test_file.py
 ```
 
+### CLI Debug Logging
+
+For troubleshooting signal-generation flows end to end, capture detailed logs while running the CLI:
+
+```bash
+uv run cli.py NVDA --days 10 --verbose --log-file run.log
+```
+
+Use `--verbose` to surface debug/INFO logs in the console and `--log-file` to persist the same output for later review. Combine with `--quiet` if you want to suppress progress messages in the terminal while still writing the log file.
+
 ### Getting Help
 
 1. Check the test logs for specific error messages
