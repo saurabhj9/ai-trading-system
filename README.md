@@ -163,6 +163,16 @@ uv run cli.py --watchlist examples/watchlist.txt
 
 For more CLI options, run: `uv run cli.py --help`
 
+#### Debug Logging for CLI Runs
+
+Capture detailed logs when diagnosing issues:
+
+```sh
+uv run cli.py NVDA --days 10 --verbose --log-file run.log
+```
+
+`--verbose` surfaces debug-level output in the terminal while `--log-file` persists the same logs for later review. Combine with `--quiet` if you prefer to suppress progress messages in the console but still write comprehensive logs to disk.
+
 ### Running the API Server (Alternative)
 
 The `main.py` script starts the FastAPI web server that provides API endpoints for generating trading signals:
