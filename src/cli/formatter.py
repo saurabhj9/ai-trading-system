@@ -16,7 +16,36 @@ class OutputFormatter:
     """Format analysis results for display."""
 
     @staticmethod
-    def format_table(results: List[Dict[str, Any]], detailed: bool = False) -> None:
+    def _color_code_signal(signal: str) -> str:
+        """Apply color coding to signals based on type."""
+        if signal == "BUY":
+            return "[green]BUY[/green]"
+        elif signal == "SELL":
+            return "[red]SELL[/red]"
+        elif signal == "HOLD":
+            return "[yellow]HOLD[/yellow]"
+        elif signal == "BULLISH":
+            return "[green]BULLISH[/green]"
+        elif signal == "BEARISH":
+            return "[red]BEARISH[/red]"
+        elif signal == "NEUTRAL":
+            return "[yellow]NEUTRAL[/yellow]"
+        elif signal == "APPROVE":
+            return "[green]APPROVE[/green]"
+        elif signal == "REJECT":
+            return "[red]REJECT[/red]"
+        elif signal == "ERROR":
+            return "[red]ERROR[/red]"
+        else:
+            # Fallback for any unknown signal type
+            return f"[dim]{signal}[/dim]"
+
+    @staticmethod
+    def format_table(
+        results: List[Dict[str, Any]],
+        detailed: bool = False,
+        skip_single_detail: bool = False,
+    ) -> None:
         """
         Format results as a rich table with colors.
 
@@ -29,7 +58,7 @@ class OutputFormatter:
             return
 
         # Handle single result
-        if len(results) == 1:
+        if len(results) == 1 and not skip_single_detail:
             OutputFormatter._format_single_detailed(results[0])
             return
 
@@ -52,13 +81,8 @@ class OutputFormatter:
                 signal = result["signal"]
                 confidence = result["confidence"]
 
-                # Color code signal
-                if signal == "BUY":
-                    signal_text = "[green]BUY[/green]"
-                elif signal == "SELL":
-                    signal_text = "[red]SELL[/red]"
-                else:
-                    signal_text = "[yellow]HOLD[/yellow]"
+                # Color code signal using helper method
+                signal_text = OutputFormatter._color_code_signal(signal)
 
                 # Truncate reasoning
                 reasoning = result["reasoning"]
@@ -70,6 +94,79 @@ class OutputFormatter:
                     f"{confidence:.1%}",
                     summary,
                 )
+
+        console.print(table)
+
+    @staticmethod
+    def format_detailed_table(results: List[Dict[str, Any]]) -> None:
+        """
+        Format results as a detailed comparison table with agent decisions.
+
+        Args:
+            results: List of analysis results
+        """
+        if not results:
+            console.print("[yellow]No results to display[/yellow]")
+            return
+
+        # Create detailed comparison table
+        table = Table(title="Agent Decision Comparison", show_header=True, header_style="bold magenta")
+        table.add_column("Symbol", style="cyan", no_wrap=True)
+        table.add_column("Technical", no_wrap=True)
+        table.add_column("Sentiment", no_wrap=True)
+        table.add_column("Risk", no_wrap=True)
+        table.add_column("Portfolio", no_wrap=True)
+        table.add_column("Signal", no_wrap=True)
+        table.add_column("Confidence", justify="right")
+        table.add_column("Summary", overflow="fold", style="dim", max_width=80)
+
+        for result in results:
+            if "error" in result:
+                error_summary = result.get("error", "Error generating analysis")
+                table.add_row(
+                    result["symbol"],
+                    "[red]ERROR[/red]",
+                    "[red]ERROR[/red]",
+                    "[red]ERROR[/red]",
+                    "[red]ERROR[/red]",
+                    "[red]ERROR[/red]",
+                    "-",
+                    Text(error_summary, style="dim"),
+                )
+                continue
+
+            # Extract agent decisions with defaults
+            agent_decisions = result.get("agent_decisions", {})
+
+            # Get signals for each agent
+            technical_signal = agent_decisions.get("technical", {}).get("signal", "N/A")
+            sentiment_signal = agent_decisions.get("sentiment", {}).get("signal", "N/A")
+            risk_signal = agent_decisions.get("risk", {}).get("signal", "N/A")
+            portfolio_signal = agent_decisions.get("portfolio", {}).get("signal", "N/A")
+
+            # Color code each agent's signal
+            technical_colored = OutputFormatter._color_code_signal(technical_signal) if technical_signal != "N/A" else "[dim]N/A[/dim]"
+            sentiment_colored = OutputFormatter._color_code_signal(sentiment_signal) if sentiment_signal != "N/A" else "[dim]N/A[/dim]"
+            risk_colored = OutputFormatter._color_code_signal(risk_signal) if risk_signal != "N/A" else "[dim]N/A[/dim]"
+            portfolio_colored = OutputFormatter._color_code_signal(portfolio_signal) if portfolio_signal != "N/A" else "[dim]N/A[/dim]"
+
+            # Color code final signal
+            final_signal = result["signal"]
+            final_signal_colored = OutputFormatter._color_code_signal(final_signal)
+
+            reasoning = result.get("reasoning", "")
+            summary_cell = Text(reasoning or "No summary available", style="dim")
+
+            table.add_row(
+                result["symbol"],
+                technical_colored,
+                sentiment_colored,
+                risk_colored,
+                portfolio_colored,
+                final_signal_colored,
+                f"{result['confidence']:.1%}",
+                summary_cell,
+            )
 
         console.print(table)
 
@@ -92,14 +189,12 @@ class OutputFormatter:
         reasoning = result["reasoning"]
 
         # Create signal display with color
+        signal_display = OutputFormatter._color_code_signal(signal)
         if signal == "BUY":
-            signal_display = "[green]BUY[/green]"
             border_style = "green"
         elif signal == "SELL":
-            signal_display = "[red]SELL[/red]"
             border_style = "red"
         else:
-            signal_display = "[yellow]HOLD[/yellow]"
             border_style = "yellow"
 
         # Main panel content
@@ -122,26 +217,8 @@ class OutputFormatter:
             for agent_name, decision in result["agent_decisions"].items():
                 agent_signal = decision["signal"]
 
-                # Color-code based on signal type and agent
-                if agent_signal == "BUY":
-                    signal_text = "[green]BUY[/green]"
-                elif agent_signal == "SELL":
-                    signal_text = "[red]SELL[/red]"
-                elif agent_signal == "HOLD":
-                    signal_text = "[yellow]HOLD[/yellow]"
-                elif agent_signal == "BULLISH":
-                    signal_text = "[green]BULLISH[/green]"
-                elif agent_signal == "BEARISH":
-                    signal_text = "[red]BEARISH[/red]"
-                elif agent_signal == "NEUTRAL":
-                    signal_text = "[yellow]NEUTRAL[/yellow]"
-                elif agent_signal == "APPROVE":
-                    signal_text = "[green]APPROVE[/green]"
-                elif agent_signal == "REJECT":
-                    signal_text = "[red]REJECT[/red]"
-                else:
-                    # Fallback for any unknown signal type
-                    signal_text = f"[dim]{agent_signal}[/dim]"
+                # Color-code using helper method
+                signal_text = OutputFormatter._color_code_signal(agent_signal)
 
                 agent_table.add_row(
                     agent_name.capitalize(),

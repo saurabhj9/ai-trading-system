@@ -147,6 +147,12 @@ For more information, visit: https://github.com/your-username/ai-trading-system
     )
 
     parser.add_argument(
+        "--detailed",
+        action="store_true",
+        help="Show a comprehensive agent comparison table with summary info",
+    )
+
+    parser.add_argument(
         "--log-file",
         type=str,
         help="Save detailed logs to file",
@@ -273,6 +279,11 @@ async def main():
         formatter.print_error("Error: No symbols provided. Use --help for usage information.")
         sys.exit(1)
 
+    # Validate format conflicts with detailed flag
+    if args.detailed and args.format != "table":
+        formatter.print_error("Error: --detailed flag is only compatible with table format (default).")
+        sys.exit(1)
+
     # Load symbols
     if args.watchlist:
         symbols = load_watchlist(args.watchlist)
@@ -300,7 +311,12 @@ async def main():
             results = await analyze_multiple(analyzer, symbols, args.days, args.quiet)
 
         # Format and display output
-        if args.format == "table":
+        if args.detailed:
+            if len(results) > 1:
+                formatter.format_detailed_table(results)
+            else:
+                formatter.format_table(results, detailed=args.verbose)
+        elif args.format == "table":
             formatter.format_table(results, detailed=args.verbose)
         elif args.format == "json":
             output = formatter.format_json(results)
@@ -315,6 +331,8 @@ async def main():
                 content = formatter.format_json(results)
             elif args.format == "csv":
                 content = formatter.format_csv(results)
+            elif args.detailed:
+                content = formatter.format_json(results)  # Save detailed as JSON
             else:
                 content = formatter.format_json(results)  # Default to JSON for table output
 
