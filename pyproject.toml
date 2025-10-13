@@ -81,3 +81,4 @@ markers = [
   "validation: Validation and quality tests",
   "comparison: Comparison tests"
 ]
+asyncio_mode = "auto"

@@ -4,10 +4,14 @@ Demo script to test the statistical indicators implementation.
 
 import asyncio
 from datetime import datetime, timedelta
+
+import pytest
+
 from src.data.pipeline import DataPipeline
 from src.data.providers.yfinance_provider import YFinanceProvider
 
 
+@pytest.mark.asyncio
 async def test_statistical_indicators():
     """Test the statistical indicators with real data."""
 

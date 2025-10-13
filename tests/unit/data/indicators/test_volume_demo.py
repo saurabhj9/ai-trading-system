@@ -7,6 +7,8 @@ from datetime import datetime, timedelta
 import sys
 import os
 
+import pytest
+
 # Add the src directory to the path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../..'))
 
@@ -15,6 +17,7 @@ from src.data.providers.yfinance_provider import YFinanceProvider
 from src.data.indicators_metadata import get_all_volume_indicators
 
 
+@pytest.mark.asyncio
 async def test_volume_indicators():
     """Test volume indicators implementation with a sample stock."""
 
