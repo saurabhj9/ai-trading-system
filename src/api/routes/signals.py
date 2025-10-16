@@ -17,7 +17,7 @@ from src.communication.orchestrator import Orchestrator
 from src.communication.state_manager import StateManager
 from src.data.cache import CacheManager
 from src.data.pipeline import DataPipeline
-from src.data.providers.alpha_vantage_provider import AlphaVantageProvider
+from src.data.providers.composite_news_provider import CompositeNewsProvider
 from src.data.providers.yfinance_provider import YFinanceProvider
 from src.llm.client import LLMClient
 from src.utils.logging import get_logger
@@ -37,13 +37,17 @@ def get_orchestrator():
     # Initialize data providers
     yfinance_provider = YFinanceProvider(rate_limit=10, period=60.0)
     alpha_vantage_api_key = os.getenv("DATA_ALPHA_VANTAGE_API_KEY")
-    if not alpha_vantage_api_key:
+    marketaux_api_key = os.getenv("DATA_MARKETAUX_API_KEY")
+    if not alpha_vantage_api_key and not marketaux_api_key:
         raise ValueError(
-            "DATA_ALPHA_VANTAGE_API_KEY environment variable is required for sentiment analysis. "
-            "Please set it in your .env file. "
-            "Get your free API key at: https://www.alphavantage.co/support/#api-key"
+            "At least one of DATA_ALPHA_VANTAGE_API_KEY or DATA_MARKETAUX_API_KEY environment variables is required for sentiment analysis. "
+            "Please set them in your .env file. "
+            "Get your free Alpha Vantage API key at: https://www.alphavantage.co/support/#api-key"
         )
-    alpha_vantage_provider = AlphaVantageProvider(api_key=alpha_vantage_api_key)
+    composite_news_provider = CompositeNewsProvider(
+        alpha_vantage_api_key=alpha_vantage_api_key,
+        marketaux_api_key=marketaux_api_key
+    )
 
     # Initialize data pipeline (uses yfinance for market data)
     data_pipeline = DataPipeline(provider=yfinance_provider, cache=CacheManager())
@@ -59,7 +63,7 @@ def get_orchestrator():
     )
     sentiment_agent = SentimentAnalysisAgent(
         config=AgentConfig(name="sentiment"),
-        news_provider=alpha_vantage_provider,
+        news_provider=composite_news_provider,
         **agent_dependencies,
     )
     risk_agent = RiskManagementAgent(

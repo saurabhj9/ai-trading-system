@@ -117,7 +117,7 @@ class RiskManagementAgent(BaseAgent):
         """
         Performs risk assessment on proposed decisions and the portfolio.
 
-        TODO: Implement actual risk calculations (e.g., VaR) instead of relying solely on the LLM.
+        TODO(RISK): Implement actual risk calculations (e.g., VaR) instead of relying solely on the LLM.
         """
         user_prompt = await self.get_user_prompt(market_data, **kwargs)
         llm_response = await self.make_llm_call(user_prompt)

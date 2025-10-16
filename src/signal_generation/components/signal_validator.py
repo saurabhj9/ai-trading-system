@@ -207,7 +207,7 @@ class SignalValidator:
         # In a real system, you would query historical signal performance data
 
         # For now, return neutral validation
-        # TODO: Implement actual historical performance analysis
+        # TODO(VALIDATOR): Implement actual historical performance analysis
         return True, 1.0
 
     def _validate_technical_criteria(self, signal: Signal, indicator_scores: List[IndicatorScore]) -> Tuple[bool, float]:

@@ -321,36 +321,41 @@ This phase focuses on transforming the system from LLM-dependent to a sophistica
 
 **Summary**: Successfully completed a comprehensive testing reorganization and cleanup that transformed the scattered test structure into a well-organized, scalable testing framework. Created a new directory structure that categorizes tests by type (unit, integration, e2e, performance, validation, comparison), implemented a comprehensive test runner with coverage reporting, and created detailed documentation. All existing tests were migrated to the new structure with updated import statements, and obsolete test scripts were removed. The new framework provides better test discoverability, maintainability, and supports flexible test execution for development and CI/CD pipelines.
 
-#### Milestone 3: Data Provider Optimization
-**Timeline: 1 week**
+#### Milestone 3: Data Provider Optimization - IN PROGRESS
+**Timeline: 1-2 weeks**
 **Start Date: 2025-10-05**
 **Completion Date: TBD**
 
--   [ ] **yfinance Optimization**
-    -   [ ] Implement better caching strategies for yfinance data
-    -   [ ] Add batch request functionality to reduce API calls
+**Note**: IEX Cloud has been discontinued as of August 31, 2024. Replacing with Finnhub which offers superior free tier (60 calls/minute vs Alpha Vantage's 5 calls/minute).
+
+-   [ ] **Universal Provider Optimization** (Apply to ALL providers)
+    -   [ ] Implement enhanced caching framework with Redis backend and market-aware TTL
+    -   [ ] Add batch request functionality for all providers (60-80% API call reduction)
     -   [ ] Optimize data retrieval patterns for local signal generation
--   [ ] **IEX Cloud Integration**
-    -   [ ] Add IEX Cloud as secondary data provider
-    -   [ ] Implement authentication and rate limiting for IEX Cloud
-    -   [ ] Utilize 50K free calls/month effectively
+    -   [ ] Implement intelligent rate limiting across all providers
+-   [ ] **Finnhub Integration** 
+    -   [ ] Add Finnhub as secondary data provider (60 calls/minute free tier)
+    -   [ ] Implement authentication and rate limiting for Finnhub
+    -   [ ] Support real-time data, historical OHLCV, news sentiment, financial fundamentals
 -   [ ] **Provider Selection Logic**
-    -   [ ] Implement intelligent provider selection based on data type
+    -   [ ] Implement intelligent provider selection based on data type and availability
     -   [ ] Add automatic fallback mechanisms for provider failures
     -   [ ] Create provider health monitoring and alerting
+    -   [ ] Optimize provider rotation for maximum free tier utilization
 -   [ ] **Data Quality Management**
     -   [ ] Implement data quality scoring for different providers
     -   [ ] Add data validation and consistency checks
     -   [ ] Create data provider manager for intelligent source selection
 
 **Success Metrics:**
-- [ ] 50% reduction in data retrieval latency
-- [ ] 99.9% data availability through provider fallbacks
-- [ ] Improved data quality scores across all providers
-- [ ] Effective utilization of IEX Cloud free tier
+- [ ] 50-75x faster response times for cached data
+- [ ] 60-80% reduction in API calls through batching
+- [ ] 99.9% data availability through multi-provider fallbacks
+- [ ] 12x improvement in API call capacity (Finnhub: 60/min vs Alpha Vantage: 5/min)
+- [ ] 70-80% cost reduction through intelligent caching and provider selection
 - [ ] Seamless provider switching without signal generation interruption
 
-**Summary**: Milestone 3 will optimize the data layer to support the high-performance requirements of the local signal generation framework. By implementing multiple data providers with intelligent selection and fallback mechanisms, the system will ensure reliable, high-quality data for signal generation while minimizing costs and latency. **Note**: This milestone will begin after completing Milestone 2b.1 fixes.
+**Summary**: Milestone 3 will transform the data layer into a high-performance, resilient caching architecture that fully supports the local signal generation framework. By implementing Finnhub integration (12x capacity improvement), universal provider optimization with enhanced caching (50-75x performance gain), and intelligent provider selection, the system will achieve dramatic performance improvements while minimizing costs and ensuring 99.9% reliability.
 
 #### Milestone 3.1: Configuration Architecture Refactoring
 **Timeline: 1-2 days**

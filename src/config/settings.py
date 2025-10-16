@@ -5,7 +5,7 @@ This module uses pydantic-settings to manage configuration from environment
 variables and .env files, providing a structured and validated way to
 access settings throughout the application.
 """
-from typing import List, Optional
+from typing import List, Optional, Dict
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -20,6 +20,25 @@ class LLMSettings(BaseSettings):
     BASE_URL: str = "https://openrouter.ai/api/v1"
     DEFAULT_MODEL: str = "anthropic/claude-3-haiku"
     CACHE_TTL_SECONDS: int = 3600  # 1 hour default TTL for LLM response caching
+
+    # Provider-specific configuration
+    PROVIDER: str = "openrouter"  # openrouter, openai_direct, anthropic_direct, etc.
+    
+    # Direct provider configurations (when not using OpenRouter as proxy)
+    OPENAI_API_KEY: Optional[str] = None
+    OPENAI_BASE_URL: str = "https://api.openai.com/v1"
+    OPENAI_DEFAULT_MODEL: str = "gpt-4o-mini"
+    
+    ANTHROPIC_API_KEY: Optional[str] = None  
+    ANTHROPIC_BASE_URL: str = "https://api.anthropic.com"
+    ANTHROPIC_DEFAULT_MODEL: str = "claude-3-haiku-20240307"
+    
+    # Provider model mappings
+    PROVIDER_MODELS: Dict[str, str] = {
+        "openrouter": "anthropic/claude-3-haiku",
+        "openai_direct": "gpt-4o-mini", 
+        "anthropic_direct": "claude-3-haiku-20240307",
+    }
 
 
 class PortfolioSettings(BaseSettings):
@@ -39,6 +58,8 @@ class DataSettings(BaseSettings):
 
     CACHE_ENABLED: bool = True
     ALPHA_VANTAGE_API_KEY: Optional[str] = None
+    MARKETAUX_API_KEY: Optional[str] = None
+    FINNHUB_API_KEY: Optional[str] = None
 
 
 class RegimeDetectionSettings(BaseSettings):

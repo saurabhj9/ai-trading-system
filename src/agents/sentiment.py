@@ -19,15 +19,18 @@ class SentimentAnalysisAgent(BaseAgent):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Require Alpha Vantage API key for sentiment analysis
-        if not settings.data.ALPHA_VANTAGE_API_KEY:
+        # Require at least one news provider API key for sentiment analysis
+        if not settings.data.ALPHA_VANTAGE_API_KEY and not settings.data.MARKETAUX_API_KEY:
             raise ValueError(
-                "DATA_ALPHA_VANTAGE_API_KEY is required for sentiment analysis. "
-                "Please set it in your .env file to fetch real news data. "
-                "Get your free API key at: https://www.alphavantage.co/support/#api-key"
+                "At least one of DATA_ALPHA_VANTAGE_API_KEY or DATA_MARKETAUX_API_KEY is required for sentiment analysis. "
+                "Please set them in your .env file to fetch real news data. "
+                "Get your free Alpha Vantage API key at: https://www.alphavantage.co/support/#api-key"
             )
-        from src.data.providers.alpha_vantage_provider import AlphaVantageProvider
-        self.news_provider = AlphaVantageProvider(settings.data.ALPHA_VANTAGE_API_KEY)
+        from src.data.providers.composite_news_provider import CompositeNewsProvider
+        self.news_provider = CompositeNewsProvider(
+            alpha_vantage_api_key=settings.data.ALPHA_VANTAGE_API_KEY,
+            marketaux_api_key=settings.data.MARKETAUX_API_KEY
+        )
 
     def get_system_prompt(self) -> str:
         """

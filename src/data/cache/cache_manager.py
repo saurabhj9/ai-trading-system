@@ -1,17 +1,17 @@
 """
 Enhanced cache manager with Redis backend and market-aware TTL support.
 
-This module provides both a simple in-memory cache for backward compatibility
-and an enhanced Redis-based cache with intelligent TTL calculation and
-comprehensive monitoring capabilities.
+This module provides a unified interface to both simple in-memory caching
+and advanced Redis-based caching with intelligent TTL calculation and
+comprehensive monitoring.
 """
 import time
 import logging
-from datetime import datetime, timedelta
+from datetime import timedelta
 from typing import Any, Dict, Optional, Union
 
-from .cache.redis_cache_manager import RedisCacheManager
-from .cache.cache_config import CacheConfig, CacheDataType
+from .redis_cache_manager import RedisCacheManager
+from .cache_config import CacheConfig, CacheDataType
 
 logger = logging.getLogger(__name__)
 
@@ -263,6 +263,7 @@ class CacheManager:
             # Simple cache info
             item = self.simple_cache._cache.get(key)
             if item:
+                from datetime import datetime
                 return {
                     "key": key,
                     "cached_at": datetime.fromtimestamp(item["expires_at"] - item.get("ttl", 3600)).isoformat(),

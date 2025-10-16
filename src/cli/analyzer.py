@@ -179,6 +179,45 @@ class StockAnalyzer:
             else:
                 formatted_results.append(result)
 
+        # Post-process results to show summary of symbol validation errors
+        valid_results = []
+        invalid_results = []
+        symbol_errors = {}
+        
+        for result in formatted_results:
+            if result.get("error"):
+                invalid_results.append(result)
+                symbol_errors[result["symbol"]] = result["error"]
+            else:
+                valid_results.append(result)
+        
+        # Print summary of symbol validation errors if any
+        if invalid_results:
+            invalid_count = len(invalid_results)
+            valid_count = len(valid_results)
+            
+            print(f"\n[WARN] {invalid_count} symbol{'s' if invalid_count > 1 else ''} had validation errors:")
+            for result in invalid_results:
+                symbol = result["symbol"]
+                error_msg = result["error"]
+                
+                # Check if it's a symbol validation error with suggestions
+                if "Did you mean" in error_msg:
+                    # Extract suggestion
+                    parts = error_msg.split("Did you mean")
+                    if len(parts) > 1:
+                        suggestion = parts[1].strip().rstrip("?")
+                        print(f"  • {symbol}: Invalid symbol. Did you mean{suggestion}?")
+                    else:
+                        print(f"  • {symbol}: {error_msg}")
+                else:
+                    print(f"  • {symbol}: {error_msg}")
+            
+            if valid_count > 0:
+                print(f"\n[INFO] Proceeding with {valid_count} valid symbol{'s' if valid_count > 1 else ''}...")
+            else:
+                print(f"\n[ERROR] No valid symbols to analyze.")
+        
         return formatted_results
 
     async def watch_symbol(

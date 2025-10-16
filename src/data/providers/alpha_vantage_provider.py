@@ -11,6 +11,7 @@ import pandas as pd
 from asyncio_throttle import Throttler
 
 from src.data.providers.base_provider import BaseDataProvider
+from src.data.symbol_validator import SymbolValidator
 
 
 class AlphaVantageProvider(BaseDataProvider):
@@ -28,6 +29,7 @@ class AlphaVantageProvider(BaseDataProvider):
         self.api_key = api_key
         self.base_url = "https://www.alphavantage.co/query"
         self.throttler = Throttler(rate_limit, period)
+        self.symbol_validator = SymbolValidator()
 
     async def fetch_data(
         self, symbol: str, start_date: datetime, end_date: datetime
@@ -48,7 +50,32 @@ class AlphaVantageProvider(BaseDataProvider):
                     data = await response.json()
 
             if "Time Series (Daily)" not in data:
-                print(f"Error from Alpha Vantage API for {symbol}: {data.get('Note') or data}")
+                # Better error parsing for Alpha Vantage
+                error_message = data.get('Error Message', '')
+                note_message = data.get('Note', '')
+                
+                if error_message:
+                    if "Invalid API call" in error_message:
+                        # Try to provide better symbol error message
+                        is_valid, validation_error = await self.symbol_validator.validate_symbol(symbol)
+                        if validation_error:
+                            print(f"Alpha Vantage symbol error for {symbol}: {validation_error.message}")
+                        else:
+                            print(f"Alpha Vantage error for {symbol}: Invalid symbol or API call")
+                    else:
+                        print(f"Alpha Vantage error for {symbol}: {error_message}")
+                elif note_message:
+                    if "rate limit" in note_message.lower():
+                        print(f"Alpha Vantage rate limit reached. Please wait and try again.")
+                    else:
+                        print(f"Alpha Vantage error for {symbol}: {note_message}")
+                else:
+                    # Empty response - likely invalid symbol
+                    is_valid, validation_error = await self.symbol_validator.validate_symbol(symbol)
+                    if validation_error:
+                        print(f"Alpha Vantage symbol error for {symbol}: {validation_error.message}")
+                    else:
+                        print(f"Alpha Vantage error for {symbol}: Invalid symbol or no data available")
                 return None
 
             df = pd.DataFrame.from_dict(data["Time Series (Daily)"], orient="index")
@@ -91,7 +118,28 @@ class AlphaVantageProvider(BaseDataProvider):
             if "Global Quote" in data and "05. price" in data["Global Quote"]:
                 return float(data["Global Quote"]["05. price"])
             else:
-                print(f"Could not retrieve current price for {symbol} from Alpha Vantage: {data.get('Note') or data}")
+                # Better error parsing for current price
+                error_message = data.get('Error Message', '')
+                note_message = data.get('Note', '')
+                
+                if error_message:
+                    if "Invalid API call" in error_message:
+                        is_valid, validation_error = await self.symbol_validator.validate_symbol(symbol)
+                        if validation_error:
+                            print(f"Alpha Vantage current price error for {symbol}: {validation_error.message}")
+                        else:
+                            print(f"Alpha Vantage current price error: Invalid symbol '{symbol}'")
+                    elif "rate limit" in note_message.lower() if note_message else False:
+                        print(f"Alpha Vantage rate limit reached for current price.")
+                    else:
+                        print(f"Alpha Vantage current price error for {symbol}: {error_message}")
+                else:
+                    # Empty response
+                    is_valid, validation_error = await self.symbol_validator.validate_symbol(symbol)
+                    if validation_error:
+                        print(f"Alpha Vantage current price error for {symbol}: {validation_error.message}")
+                    else:
+                        print(f"Alpha Vantage: No current price data available for '{symbol}'")
                 return None
 
         except aiohttp.ClientError as e:
@@ -127,7 +175,28 @@ class AlphaVantageProvider(BaseDataProvider):
             if "feed" in data:
                 return data["feed"]
             else:
-                print(f"Could not retrieve news for {symbol} from Alpha Vantage: {data.get('Note') or data}")
+                # Better error parsing for news sentiment
+                error_message = data.get('Error Message', '')
+                note_message = data.get('Note', '')
+                
+                if error_message:
+                    if "Invalid API call" in error_message:
+                        is_valid, validation_error = await self.symbol_validator.validate_symbol(symbol)
+                        if validation_error:
+                            print(f"Alpha Vantage news error for {symbol}: {validation_error.message}")
+                        else:
+                            print(f"Alpha Vantage news error: Invalid symbol '{symbol}'")
+                    elif "rate limit" in note_message.lower() if note_message else False:
+                        print(f"Alpha Vantage rate limit reached for news sentiment.")
+                    else:
+                        print(f"Alpha Vantage news error for {symbol}: {error_message}")
+                else:
+                    # Empty response
+                    is_valid, validation_error = await self.symbol_validator.validate_symbol(symbol)
+                    if validation_error:
+                        print(f"Alpha Vantage news error for {symbol}: {validation_error.message}")
+                    else:
+                        print(f"Alpha Vantage: No news data available for '{symbol}'")
                 return None
 
         except aiohttp.ClientError as e:

@@ -74,6 +74,15 @@ Examples:
   %(prog)s AAPL --output report.json         # Save to file
   %(prog)s AAPL --watch --interval 300       # Watch mode (5 min updates)
   %(prog)s --watchlist stocks.txt            # Analyze from file
+  
+Verbosity Levels:
+  %(prog)s AAPL --verbose=0                  # Silent (errors only)
+  %(prog)s AAPL --verbose=1                  # Normal (warnings + errors)
+  %(prog)s AAPL --verbose=2                  # Detailed (info + warnings + errors)
+  %(prog)s AAPL --verbose=3                  # Debug (full verbose output)
+  
+Summary Mode:
+  %(prog)s AAPL --summary-only               # Final table only (clean output)
 
 For more information, visit: https://github.com/your-username/ai-trading-system
         """,
@@ -129,15 +138,26 @@ For more information, visit: https://github.com/your-username/ai-trading-system
     parser.add_argument(
         "--verbose",
         "-v",
-        action="store_true",
-        help="Show verbose output with detailed information",
+        nargs="?",
+        const=1,
+        type=int,
+        choices=[0, 1, 2, 3],
+        default=1,
+        help="Verbosity level: 0=errors-only, 1=normal (default), 2=detailed, 3=debug (more verbose = more detail)",
     )
 
     parser.add_argument(
         "--quiet",
         "-q",
         action="store_true",
-        help="Suppress progress messages",
+        help="Silent mode (equivalent to --verbose=0)",
+    )
+
+    parser.add_argument(
+        "--summary-only",
+        "-s",
+        action="store_true",
+        help="Show only the final results table and errors",
     )
 
     parser.add_argument(
@@ -149,13 +169,14 @@ For more information, visit: https://github.com/your-username/ai-trading-system
     parser.add_argument(
         "--detailed",
         action="store_true",
-        help="Show a comprehensive agent comparison table with summary info",
+        help="[DEPRECATED] Use --verbose=2 instead",
     )
 
     parser.add_argument(
-        "--log-file",
+        "--log",
         type=str,
-        help="Save detailed logs to file",
+        metavar="FILE",
+        help="Save debug logs to file (use with --verbose=3)",
     )
 
     return parser.parse_args()
@@ -264,11 +285,34 @@ async def main():
     """Main CLI entry point."""
     args = parse_arguments()
 
+    # Handle deprecation warnings and argument conflicts
+    verbosity_level = args.verbose
+    
+    # Handle --quiet flag overriding verbosity
+    if args.quiet:
+        verbosity_level = 0
+    # Handle --summary-only flag 
+    summary_only_mode = args.summary_only
+    if summary_only_mode:
+        verbosity_level = 1  # Use normal verbosity level, control display separately
+    
+    # Handle --detailed deprecation
+    if args.detailed and not summary_only_mode:
+        formatter.print_warning("Warning: --detailed is deprecated. Use --verbose=2 instead.")
+        verbosity_level = 2
+    
     # Configure logging based on verbosity
-    configure_cli_logging(
-        verbose=args.verbose,
-        log_file=args.log_file
-    )
+    # Handle summary-only mode with special logging
+    if summary_only_mode:
+        configure_cli_logging(
+            verbose=4,  # Use level 4 for summary-only
+            log_file=getattr(args, 'log', None)
+        )
+    else:
+        configure_cli_logging(
+            verbose=verbosity_level,
+            log_file=getattr(args, 'log', None)
+        )
 
     # Disable color if requested
     if args.no_color:
@@ -279,21 +323,28 @@ async def main():
         formatter.print_error("Error: No symbols provided. Use --help for usage information.")
         sys.exit(1)
 
-    # Validate format conflicts with detailed flag
-    if args.detailed and args.format != "table":
-        formatter.print_error("Error: --detailed flag is only compatible with table format (default).")
-        sys.exit(1)
-
     # Load symbols
     if args.watchlist:
         symbols = load_watchlist(args.watchlist)
-        if not args.quiet:
+        if verbosity_level > 0:
             formatter.print_progress(f"Loaded {len(symbols)} symbols from {args.watchlist}")
     else:
         symbols = [s.upper() for s in args.symbols]
 
     # Initialize analyzer
     analyzer = StockAnalyzer()
+
+    # Show system status on higher verbosity levels (after analyzer initialization)
+    if verbosity_level >= 2 and not summary_only_mode:
+        formatter.print_header("AI Trading System CLI")
+        import os
+        redis_disabled = os.getenv('ENABLE_REDIS', '').lower() in ('false', '0', 'no')
+        if redis_disabled:
+            cache_status = "Cache: Memory (Redis disabled)"
+        else:
+            cache_status = "Cache: Auto-detecting Redis"
+        if not summary_only_mode and verbosity_level < 4:
+            formatter.print_info(f"Verbosity: Level {verbosity_level} | {cache_status}")
 
     # Watch mode (only for single symbol)
     if args.watch:
@@ -305,19 +356,22 @@ async def main():
 
     # Analyze symbols
     try:
+        # Set quiet mode for silent (0) or summary-only (4) modes
+        is_quiet = verbosity_level == 0 or summary_only_mode
+        
         if len(symbols) == 1:
-            results = [await analyze_single(analyzer, symbols[0], args.days, args.quiet)]
+            results = [await analyze_single(analyzer, symbols[0], args.days, is_quiet)]
         else:
-            results = await analyze_multiple(analyzer, symbols, args.days, args.quiet)
+            results = await analyze_multiple(analyzer, symbols, args.days, is_quiet)
 
         # Format and display output
-        if args.detailed:
+        if verbosity_level >= 2 and not summary_only_mode:  # Detailed output
             if len(results) > 1:
                 formatter.format_detailed_table(results)
             else:
-                formatter.format_table(results, detailed=args.verbose)
+                formatter.format_table(results, detailed=verbosity_level >= 2)
         elif args.format == "table":
-            formatter.format_table(results, detailed=args.verbose)
+            formatter.format_table(results, detailed=verbosity_level >= 2)
         elif args.format == "json":
             output = formatter.format_json(results)
             console.print(output)
@@ -331,7 +385,7 @@ async def main():
                 content = formatter.format_json(results)
             elif args.format == "csv":
                 content = formatter.format_csv(results)
-            elif args.detailed:
+            elif verbosity_level >= 2 and not summary_only_mode:
                 content = formatter.format_json(results)  # Save detailed as JSON
             else:
                 content = formatter.format_json(results)  # Default to JSON for table output
@@ -339,7 +393,8 @@ async def main():
             with open(args.output, "w") as f:
                 f.write(content)
 
-            formatter.print_success(f"Results saved to {args.output}")
+            if verbosity_level > 0:
+                formatter.print_success(f"Results saved to {args.output}")
 
     except KeyboardInterrupt:
         console.print("\n[yellow]Analysis interrupted by user[/yellow]")

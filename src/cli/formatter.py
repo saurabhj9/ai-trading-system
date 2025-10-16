@@ -309,3 +309,13 @@ class OutputFormatter:
     def print_warning(message: str) -> None:
         """Print a warning message."""
         console.print(f"[WARN] {message}", style="yellow")
+
+    @staticmethod
+    def print_header(message: str) -> None:
+        """Print a header message."""
+        console.print(f"[bold cyan]{message}[/bold cyan]")
+
+    @staticmethod
+    def print_info(message: str) -> None:
+        """Print an info message."""
+        console.print(f"[dim]{message}[/dim]")

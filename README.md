@@ -140,25 +140,95 @@ uv run cli.py AAPL --watch --interval 300
 
 # Analyze from watchlist file
 uv run cli.py --watchlist examples/watchlist.txt
+
+# Quick summary mode (final table only)
+uv run cli.py AAPL GOOGL --summary-only
 ```
 
-**Example Output:**
-```
-⏳ Analyzing AAPL...
-✓ Analysis complete for AAPL
+#### Verbosity Levels
+Control the amount of output and detail:
 
-╭──────────────────────────────────────────────────────────╮
-│                  📊 AAPL Analysis                        │
-├──────────────────────────────────────────────────────────┤
-│ Signal: 🟢 BUY    Confidence: 85%                        │
-│                                                          │
-│ Analysis Period: 30 days                                 │
-│ (2025-09-06 to 2025-10-06)                              │
-│                                                          │
-│ Reasoning:                                               │
-│ Strong bullish momentum with positive technical         │
-│ indicators. RSI indicates good entry point.             │
-╰──────────────────────────────────────────────────────────╯
+```sh
+# Silent mode (errors only)
+uv run cli.py AAPL --verbose=0
+
+# Normal output (default - warnings + errors)
+uv run cli.py AAPL --verbose=1
+
+# Detailed analysis with comprehensive information
+uv run cli.py AAPL --verbose=2
+
+# Debug mode with detailed logs to file
+uv run cli.py AAPL --verbose=3 --log debug.log
+
+# Silent mode equivalent
+uv run cli.py AAPL --quiet
+```
+
+#### Summary Mode
+Clean, production-friendly output with just the final table:
+
+```sh
+# Summary-only mode (final results table only)
+uv run cli.py AAPL --summary-only
+
+# Short alias
+uv run cli.py AAPL -s
+```
+
+#### Cache Configuration
+The system supports Redis caching for better performance, but gracefully falls back to memory cache if Redis is unavailable:
+
+```sh
+# Run without Redis (disable warnings)
+ENABLE_REDIS=false uv run cli.py AAPL
+
+# Run with Redis (optional setup)
+# Option 1: Docker
+docker run -d -p 6379:6379 redis:7-alpine
+
+# Option 2: Docker Compose 
+docker-compose up redis
+
+# Option 3: Native Redis installation
+# Install Redis locally and start it
+
+# Example with cache control
+ENABLE_REDIS=false uv run cli.py AAPL GOOGL --summary-only  # Summary-only with memory cache
+uv run cli.py AAPL --verbose=2  # Detailed output with Redis auto-detection
+```
+
+**Cache Behavior:**
+- **Redis available**: Uses Redis for persistent caching across sessions
+- **Redis unavailable**: Gracefully falls back to in-memory cache
+- **Disabled**: Uses only in-memory cache (faster for single runs)
+
+**Example Output (Summary-Only Mode):**
+```
+                           Agent Decision Comparison                           
++-----------------------------------------------------------------------------+
+| Symbol | Technical | Sentiment | Risk | Portfolio | Signal | Confidence | Summary |
++--------+-----------+-----------+------+-----------+--------+------------+---------+
+| AAPL   | BUY       | BULLISH   | APPROVE | BUY     | BUY    |     75.0%  | Strong... |
+| GOOGL  | HOLD      | NEUTRAL   | APPROVE | HOLD    | HOLD   |     60.0%  | Mixed...  |
++-----------------------------------------------------------------------------+
+```
+
+**Example Output (Normal Mode):**
+```
+AI Trading System CLI
+Verbosity: Level 1 | Cache: Auto-detecting Redis
+[*] Analyzing 2 symbols...
+  Processing 2 symbols... ---------------------------------------- 100% 0:00:25
+[OK] Completed analysis of 2 symbols
+
+                 Agent Decision Comparison                 
++-------------------------------------------------------------+
+| Symbol | Signal | Confidence | Summary                     |
++--------+--------+------------+-----------------------------+
+| AAPL   | BUY    |      75.0%  | Strong bullish momentum...  |
+| GOOGL  | HOLD   |      60.0%  | Mixed signals, wait and see |
++-------------------------------------------------------------+
 ```
 
 For more CLI options, run: `uv run cli.py --help`
@@ -168,10 +238,29 @@ For more CLI options, run: `uv run cli.py --help`
 Capture detailed logs when diagnosing issues:
 
 ```sh
-uv run cli.py NVDA --days 10 --verbose --log-file run.log
+# Debug mode with detailed console output
+uv run cli.py NVDA --days 10 --verbose=3
+
+# Debug mode with logs saved to file
+uv run cli.py NVDA --days 10 --verbose=3 --log debug.log
+
+# Summary-only mode (clean final table output)
+uv run cli.py NVDA --days 10 --summary-only
+
+# Silent mode (errors only)
+uv run cli.py NVDA --days 10 --verbose=0
 ```
 
-`--verbose` surfaces debug-level output in the terminal while `--log-file` persists the same logs for later review. Combine with `--quiet` if you prefer to suppress progress messages in the console but still write comprehensive logs to disk.
+**Verbosity Levels (0-3):**
+- `--verbose=0`: Silent (errors only)
+- `--verbose=1`: Normal (warnings + errors) - **default**
+- `--verbose=2`: Detailed (info + warnings + errors)
+- `--verbose=3`: Debug (full verbose output)
+
+**Summary Mode:**
+- `--summary-only` or `-s`: Final results table only (clean output)
+
+Use `--log` to save logs to file while controlling console verbosity separately.
 
 ### Running the API Server (Alternative)
 

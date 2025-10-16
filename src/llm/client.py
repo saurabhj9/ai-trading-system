@@ -1,5 +1,5 @@
 """
-LLM Client for the AI Trading System, using OpenRouter.
+LLM Client for the AI Trading System, supporting multiple providers.
 """
 import asyncio
 import hashlib
@@ -18,21 +18,36 @@ logger = get_logger(__name__)
 
 class LLMClient:
     """
-    A client for interacting with various large language models via OpenRouter.
+    A client for interacting with various large language models.
+    Supports OpenRouter, direct OpenAI, and direct Anthropic access.
     """
     def __init__(self, api_key: Optional[str] = None):
         """
-        Initializes the LLMClient for OpenRouter.
+        Initializes the LLMClient with configurable provider.
 
         Args:
-            api_key: The OpenRouter API key. If not provided, it will be read
-                      from the OPENROUTER_API_KEY environment variable.
+            api_key: The API key. Can also be set via provider-specific env vars.
         """
+        self.provider = settings.llm.PROVIDER.lower()
+        self.cache = CacheManager()
+        self.last_usage = None
+        
+        # Configure based on provider
+        if self.provider == "openrouter":
+            self._init_openrouter(api_key)
+        elif self.provider == "openai_direct":
+            self._init_openai_direct(api_key)
+        elif self.provider == "anthropic_direct":
+            self._init_anthropic_direct(api_key)
+        else:
+            raise ValueError(f"Unsupported LLM provider: {self.provider}. Supported: openrouter, openai_direct, anthropic_direct")
+    
+    def _init_openrouter(self, api_key: Optional[str] = None):
+        """Initialize OpenRouter (as proxy for multiple models)."""
         self.api_key = api_key or settings.OPENROUTER_API_KEY
         if not self.api_key:
-            raise ValueError("OPENROUTER_API_KEY environment variable not set.")
+            raise ValueError("OPENROUTER_API_KEY environment variable not set for OpenRouter provider.")
 
-        # Configure httpx client with connection pooling limits for performance
         http_client = httpx.Client(
             limits=httpx.Limits(
                 max_keepalive_connections=10,
@@ -50,21 +65,48 @@ class LLMClient:
             },
             http_client=http_client,
         )
-        self.cache = CacheManager()
-        self.last_usage = None
+        self.default_model = settings.llm.DEFAULT_MODEL
+    
+    def _init_openai_direct(self, api_key: Optional[str] = None):
+        """Initialize direct OpenAI access."""
+        self.api_key = api_key or settings.llm.OPENAI_API_KEY
+        if not self.api_key:
+            raise ValueError("LLM_OPENAI_API_KEY environment variable not set for OpenAI provider.")
+
+        http_client = httpx.Client(
+            limits=httpx.Limits(
+                max_keepalive_connections=10,
+                max_connections=20,
+                keepalive_expiry=30.0,
+            )
+        )
+
+        self.client = OpenAI(
+            base_url=settings.llm.OPENAI_BASE_URL,
+            api_key=self.api_key,
+            http_client=http_client,
+        )
+        self.default_model = settings.llm.OPENAI_DEFAULT_MODEL
+    
+    def _init_anthropic_direct(self, api_key: Optional[str] = None):
+        """Initialize direct Anthropic access."""
+        raise NotImplementedError("Direct Anthropic access not yet implemented. Use OpenRouter provider for now.")
 
     async def generate(self, model: str, prompt: str, system_prompt: str) -> str:
         """
-        Generates a response from the language model via OpenRouter.
+        Generates a response from the configured language model.
 
         Args:
-            model: The name of the language model to use (e.g., "anthropic/claude-3-haiku").
+            model: The name of the language model to use. If None, uses provider default.
             prompt: The user-level prompt for the LLM.
             system_prompt: The system-level prompt for the LLM.
 
         Returns:
             The textual response from the language model.
         """
+        # Use default model if none provided
+        if model is None:
+            model = self.default_model
         # Create cache key from inputs
         cache_key_data = f"{model}:{system_prompt}:{prompt}"
         cache_key = hashlib.sha256(cache_key_data.encode()).hexdigest()

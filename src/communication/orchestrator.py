@@ -1,6 +1,7 @@
 """
 Orchestrates the workflow of the trading agents using LangGraph.
 """
+import asyncio
 from datetime import datetime
 from typing import Dict, Any, List
 
@@ -216,7 +217,16 @@ class Orchestrator:
         )
         if not market_data:
             self.orchestrator_metrics["workflow_errors"] += 1
-            return AgentState(error=f"Failed to fetch data for {symbol}")
+            # Provide more specific error message for symbol issues
+            # (Note: We're already in an async context, so don't use asyncio.run)
+            from src.data.symbol_validator import SymbolValidator
+            symbol_validator = SymbolValidator()
+            is_valid, validation_error = await symbol_validator.validate_symbol(symbol)
+            
+            if validation_error:
+                return AgentState(error=validation_error.message)
+            else:
+                return AgentState(error=f"Failed to fetch data for {symbol} - no market data available")
 
         portfolio_state = self.state_manager.get_portfolio_state() or {
             "cash": settings.portfolio.STARTING_CASH,

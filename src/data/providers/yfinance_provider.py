@@ -2,14 +2,18 @@
 Data provider implementation for fetching market data from Yahoo Finance.
 """
 import asyncio
+import logging
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Dict, Any
 
 import pandas as pd
 import yfinance as yf
 from asyncio_throttle import Throttler
 
 from src.data.providers.base_provider import BaseDataProvider
+from src.data.symbol_validator import SymbolValidator
+
+logger = logging.getLogger(__name__)
 
 
 class YFinanceProvider(BaseDataProvider):
@@ -19,6 +23,7 @@ class YFinanceProvider(BaseDataProvider):
 
     def __init__(self, rate_limit: int = 10, period: float = 60.0):
         self.throttler = Throttler(rate_limit, period)
+        self.symbol_validator = SymbolValidator()
 
     async def fetch_data(
         self, symbol: str, start_date: datetime, end_date: datetime
@@ -35,7 +40,12 @@ class YFinanceProvider(BaseDataProvider):
                         yf.download, symbol, start=start_date, end=end_date, progress=False, auto_adjust=True
                     )
                 if data.empty:
-                    print(f"No data found for {symbol} from yfinance.")
+                    # Use symbol validator to provide better error message
+                    is_valid, validation_error = await self.symbol_validator.validate_symbol(symbol)
+                    if validation_error:
+                        logger.error(f"Symbol validation error for {symbol}: {validation_error.message}")
+                    else:
+                        logger.warning(f"No data found for {symbol} from yfinance.")
                     return None
 
                 # --- DataFrame Cleaning ---
@@ -52,13 +62,32 @@ class YFinanceProvider(BaseDataProvider):
 
                 return data
             except Exception as e:
+                error_str = str(e)
                 wait_time = 2 ** attempt  # Exponential backoff
-                print(f"Error fetching data for {symbol} from yfinance (attempt {attempt + 1}/{max_retries}): {e}")
+                
+                # Try to extract meaningful error information
+                if "yftzmissingerror" in error_str.lower():
+                    if "possibly delisted" in error_str.lower():
+                        logger.warning(f"Symbol '{symbol}' appears to be delisted or inactive")
+                    elif "no timezone found" in error_str.lower():
+                        # Try to get a suggestion
+                        _, validation_error = await self.symbol_validator.validate_symbol(symbol)
+                        if validation_error and validation_error.suggestion:
+                            logger.error(f"Invalid symbol '{symbol}'. Did you mean '{validation_error.suggestion}'?")
+                        else:
+                            logger.error(f"Invalid symbol '{symbol}' - no timezone or exchange data found")
+                    else:
+                        logger.error(f"Symbol '{symbol}' not found or appears to be invalid")
+                elif "http error 404" in error_str.lower():
+                    logger.error(f"Symbol '{symbol}' not found (404 error) - check symbol spelling")
+                else:
+                    logger.error(f"Error fetching data for {symbol} from yfinance (attempt {attempt + 1}/{max_retries}): {e}")
+                
                 if attempt < max_retries - 1:
-                    print(f"Retrying in {wait_time} seconds...")
+                    logger.info(f"Retrying in {wait_time} seconds...")
                     await asyncio.sleep(wait_time)
                 else:
-                    print(f"Failed to fetch data for {symbol} after {max_retries} attempts.")
+                    logger.error(f"Failed to fetch data for {symbol} after {max_retries} attempts.")
                     return None
 
     async def get_current_price(self, symbol: str) -> Optional[float]:
@@ -81,8 +110,24 @@ class YFinanceProvider(BaseDataProvider):
                 if price:
                     return price
 
-            print(f"Could not retrieve current price for {symbol} from yfinance.")
+            # Try to provide better error message for invalid symbol
+            is_valid, validation_error = await self.symbol_validator.validate_symbol(symbol) 
+            if validation_error:
+                logger.error(f"Current price error for {symbol}: {validation_error.message}")
+            else:
+                logger.warning(f"Could not retrieve current price for {symbol} from yfinance.")
             return None
         except Exception as e:
-            print(f"Error fetching current price for {symbol} from yfinance: {e}")
+            error_str = str(e)
+            if "yftzmissingerror" in error_str.lower():
+                if "possibly delisted" in error_str.lower():
+                    logger.warning(f"Current price error: Symbol '{symbol}' appears to be delisted or inactive")
+                elif "no timezone found" in error_str.lower():
+                    logger.error(f"Current price error: Symbol '{symbol}' is invalid or not supported")
+                else:
+                    logger.error(f"Current price error: Symbol '{symbol}' not found or invalid")
+            elif "http error 404" in error_str.lower():
+                logger.error(f"Current price error: Symbol '{symbol}' not found (404 error)")
+            else:
+                logger.error(f"Error fetching current price for {symbol} from yfinance: {e}")
             return None
