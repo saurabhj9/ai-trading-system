@@ -59,7 +59,7 @@ async def metrics_middleware(request: Request, call_next):
 # Include routers
 app.include_router(signals_router, prefix="/api/v1", tags=["signals"])
 app.include_router(status_router, prefix="/api/v1", tags=["status"])
-app.include_router(monitoring_router, prefix="/api/v1", tags=["monitoring"])
+app.include_router(monitoring_router, prefix="/api/v1/monitoring", tags=["monitoring"])
 
 @app.get("/")
 async def root():

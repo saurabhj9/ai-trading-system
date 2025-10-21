@@ -53,7 +53,7 @@ class AlphaVantageProvider(BaseDataProvider):
                 # Better error parsing for Alpha Vantage
                 error_message = data.get('Error Message', '')
                 note_message = data.get('Note', '')
-                
+
                 if error_message:
                     if "Invalid API call" in error_message:
                         # Try to provide better symbol error message
@@ -121,7 +121,7 @@ class AlphaVantageProvider(BaseDataProvider):
                 # Better error parsing for current price
                 error_message = data.get('Error Message', '')
                 note_message = data.get('Note', '')
-                
+
                 if error_message:
                     if "Invalid API call" in error_message:
                         is_valid, validation_error = await self.symbol_validator.validate_symbol(symbol)
@@ -178,7 +178,7 @@ class AlphaVantageProvider(BaseDataProvider):
                 # Better error parsing for news sentiment
                 error_message = data.get('Error Message', '')
                 note_message = data.get('Note', '')
-                
+
                 if error_message:
                     if "Invalid API call" in error_message:
                         is_valid, validation_error = await self.symbol_validator.validate_symbol(symbol)

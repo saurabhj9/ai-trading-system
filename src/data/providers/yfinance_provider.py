@@ -64,7 +64,7 @@ class YFinanceProvider(BaseDataProvider):
             except Exception as e:
                 error_str = str(e)
                 wait_time = 2 ** attempt  # Exponential backoff
-                
+
                 # Try to extract meaningful error information
                 if "yftzmissingerror" in error_str.lower():
                     if "possibly delisted" in error_str.lower():
@@ -82,7 +82,7 @@ class YFinanceProvider(BaseDataProvider):
                     logger.error(f"Symbol '{symbol}' not found (404 error) - check symbol spelling")
                 else:
                     logger.error(f"Error fetching data for {symbol} from yfinance (attempt {attempt + 1}/{max_retries}): {e}")
-                
+
                 if attempt < max_retries - 1:
                     logger.info(f"Retrying in {wait_time} seconds...")
                     await asyncio.sleep(wait_time)
@@ -111,7 +111,7 @@ class YFinanceProvider(BaseDataProvider):
                     return price
 
             # Try to provide better error message for invalid symbol
-            is_valid, validation_error = await self.symbol_validator.validate_symbol(symbol) 
+            is_valid, validation_error = await self.symbol_validator.validate_symbol(symbol)
             if validation_error:
                 logger.error(f"Current price error for {symbol}: {validation_error.message}")
             else:

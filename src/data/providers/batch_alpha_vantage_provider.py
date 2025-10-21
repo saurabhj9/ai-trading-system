@@ -19,16 +19,16 @@ from ..symbol_validator import SymbolValidator
 class AlphaVantageBatchProvider(BaseBatchProvider):
     """
     Batch provider for Alpha Vantage with optimized multi-symbol operations.
-    
+
     Alpha Vantage has strict rate limits (5 calls/minute), so this provider
     focuses on maximizing efficiency through intelligent batching and request
     aggregation while respecting rate limits.
     """
-    
+
     def __init__(self, api_key: str, rate_limit: int = 5, period: float = 60.0, max_batch_size: int = 5):
         """
         Initialize Alpha Vantage batch provider.
-        
+
         Args:
             api_key: Alpha Vantage API key
             rate_limit: Rate limit for requests (5 per minute for free tier)
@@ -42,29 +42,29 @@ class AlphaVantageBatchProvider(BaseBatchProvider):
         self.period = period
         self.max_batch_size = max_batch_size
         self.symbol_validator = SymbolValidator()
-        
+
         # Create session for reuse
         self.session = None
-        
+
     async def _get_session(self):
         """Get or create aiohttp session."""
         if self.session is None or self.session.closed:
             self.session = aiohttp.ClientSession()
         return self.session
-    
+
     async def _rate_limit_request(self):
         """Apply rate limiting to requests."""
         await asyncio.sleep(self.period / self.rate_limit)
-    
+
     def _split_symbols_batch(self, symbols: List[str]) -> List[List[str]]:
         """
         Split symbols into smaller batches to respect rate limits.
-        
+
         Alpha Vantage has very strict rate limits, so we use small batches.
-        
+
         Args:
             symbols: List of symbols to split
-            
+
         Returns:
             List of symbol batches
         """
@@ -72,7 +72,7 @@ class AlphaVantageBatchProvider(BaseBatchProvider):
         for i in range(0, len(symbols), self.max_batch_size):
             batches.append(symbols[i:i + self.max_batch_size])
         return batches
-    
+
     async def fetch_batch_historical_data(
         self,
         symbols: List[str],
@@ -81,32 +81,32 @@ class AlphaVantageBatchProvider(BaseBatchProvider):
     ) -> BatchResponse:
         """
         Fetch historical data for multiple symbols in batch.
-        
+
         Alpha Vantage doesn't support true batch historical data fetching,
         so we use parallel requests with rate limiting.
-        
+
         Args:
             symbols: List of stock symbols to fetch data for
             start_date: Start date for historical data
             end_date: End date for historical data
-            
+
         Returns:
             BatchResponse with historical data for all symbols
         """
         all_data = {}
         all_errors = {}
-        
+
         # Alpha Vantage doesn't support batch historical data, so we use parallel requests
         tasks = [
             self._fetch_single_historical(symbol, start_date, end_date)
             for symbol in symbols
         ]
-        
+
         # Process with rate limiting
         for i, task in enumerate(tasks):
             if i > 0:  # Don't delay the first request
                 await self._rate_limit_request()
-            
+
             try:
                 symbol, data, error = await task
                 if error:
@@ -116,13 +116,13 @@ class AlphaVantageBatchProvider(BaseBatchProvider):
             except Exception as e:
                 symbol = symbols[i] if i < len(symbols) else f"unknown_{i}"
                 all_errors[symbol] = f"Unexpected error: {e}"
-        
+
         # Calculate efficiency metrics (parallel vs serial)
         serial_time = len(symbols) * self.period / self.rate_limit
         parallel_time = len(symbols) * self.period / self.rate_limit
         api_calls_saved = 0  # No actual API call savings for Alpha Vantage historical data
         efficiency = self.calculate_batch_efficiency(len(symbols), api_calls_saved)
-        
+
         return BatchResponse(
             request_id=id(symbols),
             data=all_data,
@@ -134,28 +134,28 @@ class AlphaVantageBatchProvider(BaseBatchProvider):
                 **efficiency
             }
         )
-    
+
     async def _fetch_single_historical(
-        self, 
-        symbol: str, 
-        start_date: datetime, 
+        self,
+        symbol: str,
+        start_date: datetime,
         end_date: datetime
     ) -> tuple[str, Optional[pd.DataFrame], Optional[str]]:
         """Fetch historical data for a single symbol."""
         session = await self._get_session()
-        
+
         params = {
             "function": "TIME_SERIES_DAILY_ADJUSTED",
             "symbol": symbol,
             "apikey": self.api_key,
             "outputsize": "full",
         }
-        
+
         try:
             async with session.get(self.base_url, params=params) as response:
                 response.raise_for_status()
                 data = await response.json()
-            
+
             if "Time Series (Daily)" not in data:
                 error_message = data.get('Error Message', data.get('Note', ''))
                 if error_message:
@@ -171,7 +171,7 @@ class AlphaVantageBatchProvider(BaseBatchProvider):
                 else:
                     # Empty response
                     return symbol, None, f"No data available for {symbol}"
-            
+
             # Convert to DataFrame
             df = pd.DataFrame.from_dict(data["Time Series (Daily)"], orient="index")
             df.index = pd.to_datetime(df.index)
@@ -179,44 +179,44 @@ class AlphaVantageBatchProvider(BaseBatchProvider):
                 "1. open": "Open", "2. high": "High", "3. low": "Low",
                 "4. close": "Close", "5. adjusted close": "Adj Close", "6. volume": "Volume"
             }, inplace=True)
-            
+
             # Convert to numeric
             for col in ["Open", "High", "Low", "Close", "Adj Close", "Volume"]:
                 df[col] = pd.to_numeric(df[col])
-            
+
             # Filter by date range
             df = df[(df.index >= start_date) & (df.index <= end_date)]
             df.sort_index(ascending=True, inplace=True)
-            
+
             return symbol, df[["Open", "High", "Low", "Close", "Adj Close", "Volume"]], None
-            
+
         except aiohttp.ClientError as e:
             return symbol, None, f"HTTP Error for {symbol}: {e}"
         except Exception as e:
             return symbol, None, f"Error processing data for {symbol}: {e}"
-    
+
     async def fetch_batch_current_prices(self, symbols: List[str]) -> BatchResponse:
         """
         Fetch current prices for multiple symbols in batch.
-        
+
         Alpha Vantage supports batch quotes through the GLOBAL_QUOTE function,
         but it's limited to a few symbols per request.
-        
+
         Args:
             symbols: List of stock symbols to fetch prices for
-            
+
         Returns:
             BatchResponse with current prices for all symbols
         """
         all_data = {}
         all_errors = {}
-        
+
         # Split into small batches (Alpha Vantage has strict limits)
         symbol_batches = self._split_symbols_batch(symbols)
-        
+
         for batch_symbols in symbol_batches:
             await self._rate_limit_request()
-            
+
             # Create batch request for quotes
             symbols_param = ",".join(batch_symbols)
             params = {
@@ -224,25 +224,25 @@ class AlphaVantageBatchProvider(BaseBatchProvider):
                 "symbols": symbols_param,
                 "apikey": self.api_key,
             }
-            
+
             try:
                 session = await self._get_session()
                 async with session.get(self.base_url, params=params) as response:
                     response.raise_for_status()
                     data = await response.json()
-                
+
                 # Parse batch response
                 if "Global Quote" in data:
                     quotes = data["Global Quote"]
-                    
+
                     # Handle single quote (dict) or multiple quotes (list)
                     if isinstance(quotes, dict):
                         quotes = [quotes]
-                    
+
                     for quote in quotes:
                         symbol_key = f"01. symbol"
                         price_key = f"05. price"
-                        
+
                         if symbol_key in quote and price_key in quote:
                             symbol = quote[symbol_key]
                             try:
@@ -265,7 +265,7 @@ class AlphaVantageBatchProvider(BaseBatchProvider):
                     else:
                         for symbol in batch_symbols:
                             all_errors[symbol] = f"No price data available for {symbol}"
-                
+
             except aiohttp.ClientError as e:
                 error_msg = f"HTTP Error: {e}"
                 for symbol in batch_symbols:
@@ -274,11 +274,11 @@ class AlphaVantageBatchProvider(BaseBatchProvider):
                 error_msg = f"Unexpected error: {e}"
                 for symbol in batch_symbols:
                     all_errors[symbol] = error_msg
-        
+
         # Calculate efficiency metrics
         api_calls_saved = len(symbols) - len(symbol_batches)
         efficiency = self.calculate_batch_efficiency(len(symbols), api_calls_saved)
-        
+
         return BatchResponse(
             request_id=id(symbols),
             data=all_data,
@@ -291,35 +291,35 @@ class AlphaVantageBatchProvider(BaseBatchProvider):
                 **efficiency
             }
         )
-    
+
     async def fetch_batch_news_sentiment(self, symbols: List[str], limit: int = 20) -> BatchResponse:
         """
         Fetch news sentiment data for multiple symbols in batch.
-        
+
         Alpha Vantage doesn't support batch news requests, so we use parallel
         requests with rate limiting.
-        
+
         Args:
             symbols: List of stock symbols to fetch news for
             limit: Maximum number of news articles per symbol
-            
+
         Returns:
             BatchResponse with news data for all symbols
         """
         all_data = {}
         all_errors = {}
-        
+
         # Alpha Vantage doesn't support batch news requests
         tasks = [
             self._fetch_single_news_sentiment(symbol, limit)
             for symbol in symbols
         ]
-        
+
         # Process with rate limiting
         for i, task in enumerate(tasks):
             if i > 0:  # Don't delay the first request
                 await self._rate_limit_request()
-            
+
             try:
                 symbol, data, error = await task
                 if error:
@@ -329,11 +329,11 @@ class AlphaVantageBatchProvider(BaseBatchProvider):
             except Exception as e:
                 symbol = symbols[i] if i < len(symbols) else f"unknown_{i}"
                 all_errors[symbol] = f"Unexpected error: {e}"
-        
+
         # Calculate efficiency metrics
         api_calls_saved = 0  # No actual API call savings for Alpha Vantage news
         efficiency = self.calculate_batch_efficiency(len(symbols), api_calls_saved)
-        
+
         return BatchResponse(
             request_id=id(symbols),
             data=all_data,
@@ -345,23 +345,23 @@ class AlphaVantageBatchProvider(BaseBatchProvider):
                 **efficiency
             }
         )
-    
+
     async def _fetch_single_news_sentiment(self, symbol: str, limit: int) -> tuple[str, Optional[List[Dict]], Optional[str]]:
         """Fetch news sentiment for a single symbol."""
         session = await self._get_session()
-        
+
         params = {
             "function": "NEWS_SENTIMENT",
             "tickers": symbol,
             "apikey": self.api_key,
             "limit": str(limit),
         }
-        
+
         try:
             async with session.get(self.base_url, params=params) as response:
                 response.raise_for_status()
                 data = await response.json()
-            
+
             if "feed" in data:
                 return symbol, data["feed"], None
             else:
@@ -373,39 +373,39 @@ class AlphaVantageBatchProvider(BaseBatchProvider):
                         return symbol, None, f"API error: {error_message}"
                 else:
                     return symbol, None, f"No news data available for {symbol}"
-            
+
         except aiohttp.ClientError as e:
             return symbol, None, f"HTTP Error: {e}"
         except Exception as e:
             return symbol, None, f"Error processing news for {symbol}: {e}"
-    
+
     async def fetch_batch_company_profiles(self, symbols: List[str]) -> BatchResponse:
         """
         Fetch company profiles for multiple symbols in batch.
-        
+
         Alpha Vantage doesn't provide comprehensive company profile data,
         so this will return basic information from OVERVIEW function or error.
-        
+
         Args:
             symbols: List of stock symbols to fetch profiles for
-            
+
         Returns:
             BatchResponse with company profiles for all symbols
         """
         all_data = {}
         all_errors = {}
-        
+
         # Alpha Vantage doesn't support batch profile requests
         tasks = [
             self._fetch_single_company_profile(symbol)
             for symbol in symbols
         ]
-        
+
         # Process with rate limiting
         for i, task in enumerate(tasks):
             if i > 0:  # Don't delay the first request
                 await self._rate_limit_request()
-            
+
             try:
                 symbol, data, error = await task
                 if error:
@@ -415,11 +415,11 @@ class AlphaVantageBatchProvider(BaseBatchProvider):
             except Exception as e:
                 symbol = symbols[i] if i < len(symbols) else f"unknown_{i}"
                 all_errors[symbol] = f"Unexpected error: {e}"
-        
+
         # Calculate efficiency metrics
         api_calls_saved = 0  # No actual API call savings for Alpha Vantage profiles
         efficiency = self.calculate_batch_efficiency(len(symbols), api_calls_saved)
-        
+
         return BatchResponse(
             request_id=id(symbols),
             data=all_data,
@@ -431,22 +431,22 @@ class AlphaVantageBatchProvider(BaseBatchProvider):
                 **efficiency
             }
         )
-    
+
     async def _fetch_single_company_profile(self, symbol: str) -> tuple[str, Optional[Dict], Optional[str]]:
         """Fetch company profile for a single symbol using OVERVIEW function."""
         session = await self._get_session()
-        
+
         params = {
             "function": "OVERVIEW",
             "symbol": symbol,
             "apikey": self.api_key,
         }
-        
+
         try:
             async with session.get(self.base_url, params=params) as response:
                 response.raise_for_status()
                 data = await response.json()
-            
+
             if "Symbol" in data:
                 # Extract relevant company information
                 profile = {
@@ -485,10 +485,10 @@ class AlphaVantageBatchProvider(BaseBatchProvider):
                     "Currency": data.get("Currency"),
                     "Country": data.get("Country")
                 }
-                
+
                 # Remove None values
                 profile = {k: v for k, v in profile.items() if v is not None and v != "None"}
-                
+
                 return symbol, profile, None
             else:
                 error_message = data.get('Error Message', data.get('Note', ''))
@@ -499,21 +499,21 @@ class AlphaVantageBatchProvider(BaseBatchProvider):
                         return symbol, None, f"API error: {error_message}"
                 else:
                     return symbol, None, f"No company data available for {symbol}"
-            
+
         except aiohttp.ClientError as e:
             return symbol, None, f"HTTP Error: {e}"
         except Exception as e:
             return symbol, None, f"Error processing company profile for {symbol}: {e}"
-    
+
     async def close(self):
         """Close the aiohttp session."""
         if self.session and not self.session.closed:
             await self.session.close()
-    
+
     async def __aenter__(self):
         """Async context manager entry."""
         return self
-    
+
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         """Async context manager exit."""
         await self.close()

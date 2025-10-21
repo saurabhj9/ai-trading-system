@@ -30,7 +30,7 @@ class FinnhubProvider(BaseDataProvider):
     def __init__(self, api_key: str, rate_limit: int = 60, period: float = 60.0):
         """
         Initialize the Finnhub provider.
-        
+
         Args:
             api_key: Finnhub API key
             rate_limit: Number of requests allowed per period (default: 60 for free tier)
@@ -48,14 +48,14 @@ class FinnhubProvider(BaseDataProvider):
     ) -> Optional[pd.DataFrame]:
         """
         Fetches historical market data from Finnhub.
-        
+
         Note: Finnhub candle data is limited to recent history (typically 1-2 years max).
         For longer historical data, consider using yfinance as primary provider.
         """
         # Convert dates to Unix timestamps (required by Finnhub API)
         start_timestamp = int(start_date.timestamp())
         end_timestamp = int(end_date.timestamp())
-        
+
         params = {
             "symbol": symbol,
             "resolution": "D",  # Daily resolution
@@ -63,7 +63,7 @@ class FinnhubProvider(BaseDataProvider):
             "to": end_timestamp,
             "token": self.api_key,
         }
-        
+
         try:
             async with self.throttler, aiohttp.ClientSession() as session:
                 async with session.get(f"{self.base_url}/stock/candle", params=params) as response:
@@ -85,29 +85,29 @@ class FinnhubProvider(BaseDataProvider):
                 return None
 
             # Convert Finnhub response to DataFrame
-            # Finnhub returns: c=[close prices], h=[high prices], l=[low prices], 
+            # Finnhub returns: c=[close prices], h=[high prices], l=[low prices],
             # o=[open prices], s=status, t=[timestamps], v=[volumes]
             df_data = {
                 "Open": data["o"],
-                "High": data["h"], 
+                "High": data["h"],
                 "Low": data["l"],
                 "Close": data["c"],
                 "Volume": data["v"]
             }
-            
+
             df = pd.DataFrame(df_data)
-            
+
             # Convert timestamps to datetime index
             df.index = pd.to_datetime(data["t"], unit='s')
             df.index.name = "Date"
-            
+
             # Sort by date (ascending)
             df.sort_index(inplace=True)
-            
+
             # Convert to numeric types
             for col in df.columns:
                 df[col] = pd.to_numeric(df[col])
-            
+
             return df
 
         except aiohttp.ClientError as e:
@@ -125,7 +125,7 @@ class FinnhubProvider(BaseDataProvider):
             "symbol": symbol,
             "token": self.api_key,
         }
-        
+
         try:
             async with self.throttler, aiohttp.ClientSession() as session:
                 async with session.get(f"{self.base_url}/quote", params=params) as response:
@@ -179,7 +179,7 @@ class FinnhubProvider(BaseDataProvider):
             "token": self.api_key,
             "minId": 0,  # Start from most recent
         }
-        
+
         try:
             async with self.throttler, aiohttp.ClientSession() as session:
                 async with session.get(f"{self.base_url}/news", params=params) as response:
@@ -211,7 +211,7 @@ class FinnhubProvider(BaseDataProvider):
                         }]
                     }
                     transformed_articles.append(transformed_article)
-                
+
                 return transformed_articles
             else:
                 # Handle error cases
@@ -244,10 +244,10 @@ class FinnhubProvider(BaseDataProvider):
     async def fetch_company_profile(self, symbol: str) -> Optional[Dict[str, Any]]:
         """
         Fetches company profile information from Finnhub.
-        
+
         Args:
             symbol: The stock ticker to fetch profile for.
-            
+
         Returns:
             Dictionary with company profile information or None if failed.
         """
@@ -255,7 +255,7 @@ class FinnhubProvider(BaseDataProvider):
             "symbol": symbol,
             "token": self.api_key,
         }
-        
+
         try:
             async with self.throttler, aiohttp.ClientSession() as session:
                 async with session.get(f"{self.base_url}/stock/profile2", params=params) as response:
@@ -283,14 +283,14 @@ class FinnhubProvider(BaseDataProvider):
     async def get_multiple_quotes(self, symbols: List[str]) -> Dict[str, Optional[float]]:
         """
         Fetches current prices for multiple symbols in parallel.
-        
+
         Args:
             symbols: List of stock tickers to fetch prices for.
-            
+
         Returns:
             Dictionary mapping symbols to their current prices (or None if failed).
         """
         tasks = [self.get_current_price(symbol) for symbol in symbols]
         results = await asyncio.gather(*tasks, return_exceptions=True)
-        
+
         return dict(zip(symbols, results))

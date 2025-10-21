@@ -96,12 +96,12 @@ class TestFinnhubProvider:
         mock_response = AsyncMock()
         mock_response.raise_for_status = AsyncMock()
         mock_response.json = AsyncMock(return_value=mock_ohlcv_response)
-        
+
         mock_session.get.return_value.__aenter__.return_value = mock_response
 
         with patch('aiohttp.ClientSession') as mock_session_class:
             mock_session_class.return_value.__aenter__.return_value = mock_session
-            
+
             result = await provider.fetch_data("AAPL", start_date, end_date)
 
         # Verify the result is a properly formatted DataFrame
@@ -109,11 +109,11 @@ class TestFinnhubProvider:
         assert len(result) == 3
         assert list(result.columns) == ["Open", "High", "Low", "Close", "Volume"]
         assert result.index.name == "Date"
-        
+
         # Verify data types
         for col in result.columns:
             assert pd.api.types.is_numeric_dtype(result[col])
-        
+
         # Verify sample values
         assert result.iloc[0]["Open"] == 100.0
         assert result.iloc[0]["Close"] == 104.0
@@ -128,12 +128,12 @@ class TestFinnhubProvider:
         mock_session = AsyncMock()
         mock_response = AsyncMock()
         mock_response.raise_for_status = AsyncMock(side_effect=aiohttp.ClientError("API Error"))
-        
+
         mock_session.get.return_value.__aenter__.return_value = mock_response
 
         with patch('aiohttp.ClientSession') as mock_session_class:
             mock_session_class.return_value.__aenter__.return_value = mock_session
-            
+
             result = await provider.fetch_data("INVALID", start_date, end_date)
 
         assert result is None
@@ -151,12 +151,12 @@ class TestFinnhubProvider:
         mock_response = AsyncMock()
         mock_response.raise_for_status = AsyncMock()
         mock_response.json = AsyncMock(return_value=mock_response_data)
-        
+
         mock_session.get.return_value.__aenter__.return_value = mock_response
 
         with patch('aiohttp.ClientSession') as mock_session_class:
             mock_session_class.return_value.__aenter__.return_value = mock_session
-            
+
             result = await provider.fetch_data("INVALID", start_date, end_date)
 
         assert result is None
@@ -168,12 +168,12 @@ class TestFinnhubProvider:
         mock_response = AsyncMock()
         mock_response.raise_for_status = AsyncMock()
         mock_response.json = AsyncMock(return_value=mock_quote_response)
-        
+
         mock_session.get.return_value.__aenter__.return_value = mock_response
 
         with patch('aiohttp.ClientSession') as mock_session_class:
             mock_session_class.return_value.__aenter__.return_value = mock_session
-            
+
             result = await provider.get_current_price("AAPL")
 
         assert result == 150.25
@@ -188,12 +188,12 @@ class TestFinnhubProvider:
         mock_response = AsyncMock()
         mock_response.raise_for_status = AsyncMock()
         mock_response.json = AsyncMock(return_value=mock_response_data)
-        
+
         mock_session.get.return_value.__aenter__.return_value = mock_response
 
         with patch('aiohttp.ClientSession') as mock_session_class:
             mock_session_class.return_value.__aenter__.return_value = mock_session
-            
+
             result = await provider.get_current_price("INVALID")
 
         assert result is None
@@ -205,18 +205,18 @@ class TestFinnhubProvider:
         mock_response = AsyncMock()
         mock_response.raise_for_status = AsyncMock()
         mock_response.json = AsyncMock(return_value=mock_news_response)
-        
+
         mock_session.get.return_value.__aenter__.return_value = mock_response
 
         with patch('aiohttp.ClientSession') as mock_session_class:
             mock_session_class.return_value.__aenter__.return_value = mock_session
-            
+
             result = await provider.fetch_news_sentiment("AAPL", limit=2)
 
         # Verify the result is a list with correct format
         assert isinstance(result, list)
         assert len(result) == 2
-        
+
         # Verify article format matches Alpha Vantage format
         article = result[0]
         assert "title" in article
@@ -235,12 +235,12 @@ class TestFinnhubProvider:
         mock_response = AsyncMock()
         mock_response.raise_for_status = AsyncMock()
         mock_response.json = AsyncMock(return_value=mock_news_response)
-        
+
         mock_session.get.return_value.__aenter__.return_value = mock_response
 
         with patch('aiohttp.ClientSession') as mock_session_class:
             mock_session_class.return_value.__aenter__.return_value = mock_session
-            
+
             result = await provider.fetch_news_sentiment("AAPL", limit=1)
 
         # Verify only 1 article is returned despite 2 in mock response
@@ -257,12 +257,12 @@ class TestFinnhubProvider:
         mock_response = AsyncMock()
         mock_response.raise_for_status = AsyncMock()
         mock_response.json = AsyncMock(return_value=mock_response_data)
-        
+
         mock_session.get.return_value.__aenter__.return_value = mock_response
 
         with patch('aiohttp.ClientSession') as mock_session_class:
             mock_session_class.return_value.__aenter__.return_value = mock_session
-            
+
             result = await provider.fetch_news_sentiment("INVALID")
 
         assert result is None
@@ -286,12 +286,12 @@ class TestFinnhubProvider:
         mock_response = AsyncMock()
         mock_response.raise_for_status = AsyncMock()
         mock_response.json = AsyncMock(return_value=mock_profile_data)
-        
+
         mock_session.get.return_value.__aenter__.return_value = mock_response
 
         with patch('aiohttp.ClientSession') as mock_session_class:
             mock_session_class.return_value.__aenter__.return_value = mock_session
-            
+
             result = await provider.fetch_company_profile("AAPL")
 
         assert result is not None
@@ -308,12 +308,12 @@ class TestFinnhubProvider:
         mock_response = AsyncMock()
         mock_response.raise_for_status = AsyncMock()
         mock_response.json = AsyncMock(return_value=mock_response_data)
-        
+
         mock_session.get.return_value.__aenter__.return_value = mock_response
 
         with patch('aiohttp.ClientSession') as mock_session_class:
             mock_session_class.return_value.__aenter__.return_value = mock_session
-            
+
             result = await provider.fetch_company_profile("INVALID")
 
         assert result is None
@@ -377,7 +377,7 @@ class TestFinnhubProvider:
 
         # This method should be inherited from BaseDataProvider
         market_data = provider.to_market_data(data, "AAPL")
-        
+
         assert market_data.symbol == "AAPL"
         assert market_data.price == 104.0
         assert market_data.volume == 1000000

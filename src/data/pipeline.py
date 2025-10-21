@@ -26,9 +26,9 @@ class DataPipeline:
     """
 
     def __init__(
-        self, 
-        provider: BaseDataProvider, 
-        cache: Optional[CacheManager] = None, 
+        self,
+        provider: BaseDataProvider,
+        cache: Optional[CacheManager] = None,
         cache_ttl_seconds: int = 300,
         use_enhanced_caching: bool = True,
         use_batch_processing: bool = True,
@@ -40,24 +40,24 @@ class DataPipeline:
         self.use_enhanced_caching = use_enhanced_caching
         self.use_batch_processing = use_batch_processing
         self.batch_config = batch_config or {}
-        
+
         # If enhanced caching is enabled but no cache provided, create one
         if self.use_enhanced_caching and self.cache is None:
             import os
-            
+
             # Check if Redis is explicitly disabled
             redis_disabled = os.getenv('ENABLE_REDIS', '').lower() in ('false', '0', 'no')
-            
+
             try:
                 cache_config = CacheConfig()
                 enable_redis = not redis_disabled
-                
+
                 self.cache = CacheManager(
                     enable_redis=enable_redis,
                     cache_config=cache_config,
                     fallback_to_simple=True
                 )
-                
+
                 if redis_disabled:
                     logger.info("Enhanced caching enabled with Redis disabled (via ENABLE_REDIS=false)")
                 elif self.cache.use_redis:
@@ -68,7 +68,7 @@ class DataPipeline:
                 logger.warning(f"Failed to initialize enhanced caching: {e}. Using memory cache.")
                 self.cache = CacheManager(enable_redis=False)
                 self.use_enhanced_caching = False
-        
+
         # Initialize batch provider if enabled
         self.batch_provider = None
         if self.use_batch_processing:
@@ -98,15 +98,15 @@ class DataPipeline:
         if self.cache and self.use_enhanced_caching:
             from src.data.cache.cache_config import CacheKeyBuilder
             cache_key = CacheKeyBuilder.build_historical_key(
-                symbol, 
-                start_date.date().isoformat(), 
+                symbol,
+                start_date.date().isoformat(),
                 end_date.date().isoformat(),
                 getattr(self.provider, '__class__', {}).__name__
             )
         else:
             # Fallback to simple key format
             cache_key = f"{symbol}_{start_date.isoformat()}_{end_date.isoformat()}"
-        
+
         if self.cache:
             cached_data = self.cache.get(cache_key)
             if cached_data:
@@ -808,9 +808,9 @@ class DataPipeline:
             if self.use_enhanced_caching:
                 # Use enhanced caching with proper data type
                 self.cache.set(
-                    cache_key, 
-                    market_data, 
-                    self.cache_ttl_seconds, 
+                    cache_key,
+                    market_data,
+                    self.cache_ttl_seconds,
                     data_type=CacheDataType.HISTORICAL_OHLCV
                 )
             else:
@@ -873,53 +873,53 @@ class DataPipeline:
                 f"{symbol}_{start_date.isoformat()}_{end_date.isoformat()}"
                 for symbol in symbols
             ]
-        
+
         # Check cache first
         if self.cache:
             cached_data = {}
             cache_miss_symbols = []
-            
+
             for i, (symbol, cache_key) in enumerate(zip(symbols, cache_keys)):
                 cached_result = self.cache.get(cache_key)
                 if cached_result:
                     cached_data[symbol] = cached_result
                 else:
                     cache_miss_symbols.append(symbol)
-            
+
             # Return cached data for symbols that were found in cache
             if cached_data and len(cache_miss_symbols) == 0:
                 logger.debug(f"Batch cache HIT for all {len(symbols)} symbols")
                 return [cached_data.get(symbol) for symbol in symbols]
-            
+
             symbols_to_fetch = cache_miss_symbols
             logger.debug(f"Batch cache PARTIAL HIT: {len(cached_data)} cached, {len(symbols_to_fetch)} to fetch")
         else:
             symbols_to_fetch = symbols
             cached_data = {}
-        
+
         if not symbols_to_fetch:
             return [cached_data.get(symbol) for symbol in symbols]
-        
+
         # Fetch data using batch provider
         try:
             batch_response = await self.batch_provider.fetch_batch_historical_data(
                 symbols_to_fetch, start_date, end_date
             )
-            
+
             # Process batch response
             market_data_map = {}
             processing_errors = {}
-            
+
             for symbol in symbols_to_fetch:
                 ohlcv_df = batch_response.get_symbol_data(symbol)
                 error = batch_response.get_symbol_error(symbol)
-                
+
                 if ohlcv_df is not None:
                     try:
                         # Process the data for this symbol
                         market_data = await self._process_single_symbol_data(symbol, ohlcv_df, historical_periods)
                         market_data_map[symbol] = market_data
-                        
+
                         # Cache the processed data
                         if self.cache:
                             cache_key = cache_keys[symbols.index(symbol)]
@@ -932,7 +932,7 @@ class DataPipeline:
                                 )
                             else:
                                 self.cache.set(cache_key, market_data, self.cache_ttl_seconds)
-                        
+
                     except Exception as e:
                         logger.error(f"Error processing data for {symbol}: {e}")
                         processing_errors[symbol] = str(e)
@@ -940,7 +940,7 @@ class DataPipeline:
                     processing_errors[symbol] = error
                 else:
                     processing_errors[symbol] = "No data available"
-            
+
             # Combine cached and freshly fetched data
             final_results = []
             for symbol in symbols:
@@ -950,28 +950,28 @@ class DataPipeline:
                     final_results.append(market_data_map[symbol])
                 else:
                     final_results.append(None)
-            
+
             # Log batch processing statistics
             success_count = sum(1 for result in final_results if result is not None)
             total_count = len(final_results)
-            
+
             if batch_response.metadata:
                 efficiency = batch_response.metadata.get("efficiency_percentage", 0)
                 logger.info(f"Batch processing completed: {success_count}/{total_count} symbols successful, {efficiency:.1f}% efficiency")
-            
+
             return final_results
-            
+
         except Exception as e:
             logger.error(f"Batch processing failed, falling back to individual requests: {e}")
-            
+
             # Fall back to individual requests for failed symbols
             fallback_tasks = [
                 self.fetch_and_process_data(symbol, start_date, end_date, historical_periods)
                 for symbol in symbols_to_fetch
             ]
-            
+
             individual_results = await asyncio.gather(*fallback_tasks, return_exceptions=True)
-            
+
             # Combine cached and individual results
             final_results = []
             for symbol in symbols:
@@ -985,7 +985,7 @@ class DataPipeline:
                         logger.error(f"Individual request failed for {symbol}: {result}")
                     else:
                         final_results.append(result)
-            
+
             return final_results
 
     async def _process_single_symbol_data(
@@ -993,25 +993,25 @@ class DataPipeline:
     ) -> MarketData:
         """
         Process OHLCV data for a single symbol and return MarketData object.
-        
+
         This method processes the DataFrame and calculates all technical indicators,
         then creates a MarketData object with both current and historical data.
-        
+
         Args:
             symbol: Stock symbol
             ohlcv_df: DataFrame with OHLCV data
             historical_periods: Number of historical periods to include
-            
+
         Returns:
             MarketData object with processed data
         """
         if ohlcv_df.empty:
             return None
-        
+
         try:
             # Get the latest data point
             latest_data = ohlcv_df.iloc[-1]
-            
+
             # Define indicator keys
             momentum_keys = ['RSI_14', 'STOCH_14_3_3', 'STOCHRSI_14', 'STOCHD_14', 'WILLR_14', 'CCI_20']
             mean_reversion_keys = ['BB_UPPER_20_2', 'BB_MIDDLE_20_2', 'BB_LOWER_20_2']
@@ -1019,7 +1019,7 @@ class DataPipeline:
             trend_keys = ['EMA_10', 'EMA_20', 'ADX_14', 'AROON_DOWN_14', 'AROON_UP_14']
             volume_keys = ['OBV', 'VWAP', 'MFI_14', 'ADL']
             statistical_keys = ['HURST', 'Z_SCORE_20', 'CORRELATION_20']
-            
+
             # Collect all indicators
             technical_indicators = {}
             momentum_indicators = {}
@@ -1028,7 +1028,7 @@ class DataPipeline:
             trend_indicators = {}
             volume_indicators = {}
             statistical_indicators = {}
-            
+
             historical_momentum = []
             historical_mean_reversion = []
             historical_volatility = []
@@ -1036,7 +1036,7 @@ class DataPipeline:
             historical_volume = []
             historical_statistical = []
             historical_ohlc = []
-            
+
             # Process each row for historical data
             for index, row in ohlcv_df.iterrows():
                 # Collect momentum indicators
@@ -1045,7 +1045,7 @@ class DataPipeline:
                     if key in row and not pd.isna(row[key]):
                         momentum[key] = row[key]
                 historical_momentum.append(momentum)
-                
+
                 # Collect mean reversion indicators
                 mean_reversion = {}
                 for key in mean_reversion_keys:
@@ -1057,7 +1057,7 @@ class DataPipeline:
                         elif key == 'BB_LOWER_20_2':
                             mean_reversion['BB_LOWER'] = row[key]
                 historical_mean_reversion.append(mean_reversion)
-                
+
                 # Collect volatility indicators
                 volatility = {}
                 for key in volatility_keys:
@@ -1069,14 +1069,14 @@ class DataPipeline:
                         elif key == 'CHAIKIN_VOL_10_10':
                             volatility['CHAIKIN_VOLATILITY'] = row[key]
                 historical_volatility.append(volatility)
-                
+
                 # Collect trend indicators
                 trend = {}
                 for key in trend_keys:
                     if key in row and not pd.isna(row[key]):
                         trend[key] = row[key]
                 historical_trend.append(trend)
-                
+
                 # Collect volume indicators
                 volume = {}
                 for key in volume_keys:
@@ -1090,7 +1090,7 @@ class DataPipeline:
                         elif key == 'ADL':
                             volume['ADL'] = row[key]
                 historical_volume.append(volume)
-                
+
                 # Collect statistical indicators
                 statistical = {}
                 for key in statistical_keys:
@@ -1102,7 +1102,7 @@ class DataPipeline:
                         elif key == 'CORRELATION_20':
                             statistical['CORRELATION'] = row[key]
                 historical_statistical.append(statistical)
-                
+
                 # Collect historical OHLCV data for LocalSignalGenerator
                 ohlc_row = {
                     'open': row['Open'],
@@ -1112,12 +1112,12 @@ class DataPipeline:
                     'volume': row['Volume']
                 }
                 historical_ohlc.append(ohlc_row)
-            
+
             # Collect current indicators
             for key in momentum_keys:
                 if key in latest_data and not pd.isna(latest_data[key]):
                     technical_indicators[key] = latest_data[key]
-            
+
             for key in mean_reversion_keys:
                 if key in latest_data and not pd.isna(latest_data[key]):
                     if key == 'BB_UPPER_20_2':
@@ -1126,7 +1126,7 @@ class DataPipeline:
                         mean_reversion_indicators['BB_MIDDLE'] = latest_data[key]
                     elif key == 'BB_LOWER_20_2':
                         mean_reversion_indicators['BB_LOWER'] = latest_data[key]
-            
+
             for key in volatility_keys:
                 if key in latest_data and not pd.isna(latest_data[key]):
                     if key == 'ATRr_14':
@@ -1135,19 +1135,19 @@ class DataPipeline:
                         volatility_indicators['HISTORICAL_VOLATILITY'] = latest_data[key]
                     elif key == 'CHAIKIN_VOL_10_10':
                         volatility_indicators['CHAIKIN_VOLATILITY'] = latest_data[key]
-            
+
             for key in trend_keys:
                 if key in latest_data and not pd.isna(latest_data[key]):
                     trend_indicators[key] = latest_data[key]
-            
+
             for key in volume_keys:
                 if key in latest_data and not pd.isna(latest_data[key]):
                     volume_indicators[key] = latest_data[key]
-            
+
             for key in statistical_keys:
                 if key in latest_data and not pd.isna(latest_data[key]):
                     statistical_indicators[key] = latest_data[key]
-            
+
             # Limit historical data to requested periods
             if len(historical_momentum) > historical_periods:
                 historical_momentum = historical_momentum[-historical_periods:]
@@ -1163,7 +1163,7 @@ class DataPipeline:
                 historical_statistical = historical_statistical[-historical_periods:]
             if len(historical_ohlc) > historical_periods:
                 historical_ohlc = historical_ohlc[-historical_periods:]
-            
+
             # Create MarketData object
             return MarketData(
                 symbol=symbol,
@@ -1171,9 +1171,9 @@ class DataPipeline:
                 volume=latest_data["Volume"],
                 timestamp=latest_data.name.to_pydatetime(),
                 ohlc={
-                    "Open": latest_data["Open"], 
+                    "Open": latest_data["Open"],
                     "High": latest_data["High"],
-                    "Low": latest_data["Low"], 
+                    "Low": latest_data["Low"],
                     "Close": latest_data["Close"]
                 },
                 technical_indicators=technical_indicators,
@@ -1192,7 +1192,7 @@ class DataPipeline:
                 historical_statistical=historical_statistical,
                 historical_ohlc=historical_ohlc,
             )
-            
+
         except Exception as e:
             logger.error(f"Error processing data for {symbol}: {e}")
             return None

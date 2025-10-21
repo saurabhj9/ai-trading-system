@@ -31,7 +31,7 @@ class LLMClient:
         self.provider = settings.llm.PROVIDER.lower()
         self.cache = CacheManager()
         self.last_usage = None
-        
+
         # Configure based on provider
         if self.provider == "openrouter":
             self._init_openrouter(api_key)
@@ -41,7 +41,7 @@ class LLMClient:
             self._init_anthropic_direct(api_key)
         else:
             raise ValueError(f"Unsupported LLM provider: {self.provider}. Supported: openrouter, openai_direct, anthropic_direct")
-    
+
     def _init_openrouter(self, api_key: Optional[str] = None):
         """Initialize OpenRouter (as proxy for multiple models)."""
         self.api_key = api_key or settings.OPENROUTER_API_KEY
@@ -66,7 +66,7 @@ class LLMClient:
             http_client=http_client,
         )
         self.default_model = settings.llm.DEFAULT_MODEL
-    
+
     def _init_openai_direct(self, api_key: Optional[str] = None):
         """Initialize direct OpenAI access."""
         self.api_key = api_key or settings.llm.OPENAI_API_KEY
@@ -87,7 +87,7 @@ class LLMClient:
             http_client=http_client,
         )
         self.default_model = settings.llm.OPENAI_DEFAULT_MODEL
-    
+
     def _init_anthropic_direct(self, api_key: Optional[str] = None):
         """Initialize direct Anthropic access."""
         raise NotImplementedError("Direct Anthropic access not yet implemented. Use OpenRouter provider for now.")

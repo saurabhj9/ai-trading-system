@@ -77,7 +77,7 @@ class SimpleCacheManager:
 class CacheManager:
     """
     Enhanced cache manager with Redis backend and market-aware TTL support.
-    
+
     This class provides a unified interface to both simple in-memory caching
     and advanced Redis-based caching with intelligent TTL calculation and
     comprehensive monitoring.
@@ -91,7 +91,7 @@ class CacheManager:
     ):
         """
         Initialize the enhanced cache manager.
-        
+
         Args:
             enable_redis: Whether to enable Redis caching
             cache_config: Configuration for Redis cache
@@ -100,7 +100,7 @@ class CacheManager:
         self.enable_redis = enable_redis
         self.cache_config = cache_config or CacheConfig()
         self.fallback_to_simple = fallback_to_simple
-        
+
         # Initialize Redis cache if enabled
         self.redis_cache = None
         if self.enable_redis:
@@ -114,16 +114,16 @@ class CacheManager:
                     self.enable_redis = False
                 else:
                     logger.info("Falling back to simple in-memory cache")
-        
+
         # Initialize simple cache as fallback
         self.simple_cache = SimpleCacheManager()
-        
+
         # Determine which cache to use
         self.use_redis = self.enable_redis and self.redis_cache is not None
         self.cache_type = "redis" if self.use_redis else "simple"
-        
+
         logger.info(f"Cache manager initialized using {self.cache_type} backend")
-    
+
     def set(
         self,
         key: str,
@@ -133,13 +133,13 @@ class CacheManager:
     ) -> bool:
         """
         Adds an item to the cache with a specified TTL.
-        
+
         Args:
             key: The key to store the item under.
             value: The item to store.
             ttl_seconds: The time-to-live for the item, in seconds.
             data_type: Type of data for intelligent TTL (Redis cache only)
-            
+
         Returns:
             True if successful, False otherwise
         """
@@ -150,26 +150,26 @@ class CacheManager:
                     data_type = CacheDataType(data_type)
                 except ValueError:
                     data_type = CacheDataType.HISTORICAL_OHLCV
-            
+
             return self.redis_cache.set(key, value, data_type)
-        
+
         # Use simple cache with basic TTL
         if self.use_redis:
             # Redis cache without data type (backwards compatibility)
-            return self.redis_cache.set(key, value, CacheDataType.HISTORICAL_OHLCV, 
+            return self.redis_cache.set(key, value, CacheDataType.HISTORICAL_OHLCV,
                                       timedelta(seconds=ttl_seconds))
         else:
             # Simple cache
             self.simple_cache.set(key, value, ttl_seconds)
             return True
-    
+
     def get(self, key: str) -> Optional[Any]:
         """
         Retrieves an item from the cache if it exists and has not expired.
-        
+
         Args:
             key: The key of the item to retrieve.
-            
+
         Returns:
             The cached item, or None if it is not found or has expired.
         """
@@ -179,14 +179,14 @@ class CacheManager:
         else:
             # Use simple cache
             return self.simple_cache.get(key)
-    
+
     def delete(self, key: str) -> bool:
         """
         Deletes an item from the cache.
-        
+
         Args:
             key: The key of the item to delete.
-            
+
         Returns:
             True if successful, False otherwise
         """
@@ -197,7 +197,7 @@ class CacheManager:
                 del self.simple_cache._cache[key]
                 return True
             return False
-    
+
     def clear(self) -> bool:
         """Clears all items from the cache."""
         if self.use_redis:
@@ -205,11 +205,11 @@ class CacheManager:
         else:
             self.simple_cache.clear()
             return True
-    
+
     def get_stats(self) -> Dict[str, Any]:
         """
         Get cache statistics.
-        
+
         Returns:
             Dictionary with cache statistics
         """
@@ -224,11 +224,11 @@ class CacheManager:
                 "enabled": True,
                 "redis_available": False
             }
-    
+
     def cleanup_expired(self) -> int:
         """
         Clean up expired entries from memory cache.
-        
+
         Returns:
             Number of items cleaned up
         """
@@ -241,19 +241,19 @@ class CacheManager:
                 key for key, item in self.simple_cache._cache.items()
                 if current_time > item["expires_at"]
             ]
-            
+
             for key in expired_keys:
                 del self.simple_cache._cache[key]
-            
+
             return len(expired_keys)
-    
+
     def get_cache_info(self, key: str) -> Optional[Dict[str, Any]]:
         """
         Get detailed information about a cached item.
-        
+
         Args:
             key: Cache key
-            
+
         Returns:
             Dictionary with cache information or None if not found
         """

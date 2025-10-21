@@ -109,9 +109,13 @@ Follow these instructions to get a copy of the project up and running on your lo
         ```sh
         cp .env.example .env
         ```
-    -   Open the `.env` file and add your API keys. **Both keys are required**:
+    -   Open the `.env` file and add your API keys. **API keys are required**:
         -   `OPENROUTER_API_KEY`: **[REQUIRED]** Your API key for OpenRouter (AI-powered analysis). Get your key at: https://openrouter.ai/keys
         -   `DATA_ALPHA_VANTAGE_API_KEY`: **[REQUIRED]** Your API key for Alpha Vantage (real-time news sentiment). Get a free key at: https://www.alphavantage.co/support/#api-key (free tier: 25 API calls per day)
+        -   `DATA_FINNHUB_API_KEY`: Optional additional data provider
+        -   `DATA_MARKETAUX_API_KEY`: Optional news data provider
+
+    **Note:** This system uses a 3-tier configuration architecture. Feature flags and business logic have sensible defaults in `src/config/settings.py` and can be overridden in `.env` for local development. See [Configuration Guide](docs/CONFIGURATION.md) for details.
 
 ## Usage
 
@@ -187,7 +191,7 @@ ENABLE_REDIS=false uv run cli.py AAPL
 # Option 1: Docker
 docker run -d -p 6379:6379 redis:7-alpine
 
-# Option 2: Docker Compose 
+# Option 2: Docker Compose
 docker-compose up redis
 
 # Option 3: Native Redis installation
@@ -203,9 +207,20 @@ uv run cli.py AAPL --verbose=2  # Detailed output with Redis auto-detection
 - **Redis unavailable**: Gracefully falls back to in-memory cache
 - **Disabled**: Uses only in-memory cache (faster for single runs)
 
+#### Live Analysis (Watch Mode)
+For continuous monitoring, use watch mode to get live analysis at specified intervals.
+
+```sh
+# Run live analysis with the default 5-minute interval
+uv run cli.py <SYMBOL> --watch
+
+# Specify a custom update interval (e.g., every 10 minutes)
+uv run cli.py <SYMBOL> --watch --interval 600
+```
+
 **Example Output (Summary-Only Mode):**
 ```
-                           Agent Decision Comparison                           
+                           Agent Decision Comparison
 +-----------------------------------------------------------------------------+
 | Symbol | Technical | Sentiment | Risk | Portfolio | Signal | Confidence | Summary |
 +--------+-----------+-----------+------+-----------+--------+------------+---------+
@@ -222,7 +237,7 @@ Verbosity: Level 1 | Cache: Auto-detecting Redis
   Processing 2 symbols... ---------------------------------------- 100% 0:00:25
 [OK] Completed analysis of 2 symbols
 
-                 Agent Decision Comparison                 
+                 Agent Decision Comparison
 +-------------------------------------------------------------+
 | Symbol | Signal | Confidence | Summary                     |
 +--------+--------+------------+-----------------------------+
@@ -450,6 +465,7 @@ Here is a high-level overview of the project's directory structure:
 ├───docs/            # Project documentation
 │   └───testing/     # Comprehensive testing documentation
 ├───examples/        # Example usage scripts
+├───notebooks/       # Jupyter notebooks for analysis and experimentation
 ├───performance_charts/ # Performance visualization charts
 ├───scripts/         # Utility and deployment scripts
 ├───src/             # Main source code
@@ -457,6 +473,7 @@ Here is a high-level overview of the project's directory structure:
 │   ├───analysis/    # Market analysis components
 │   ├───api/         # FastAPI application
 │   ├───backtesting/ # Backtesting engine and components
+│   ├───cli/         # Command-line interface components
 │   ├───communication/ # Message bus and orchestration
 │   ├───config/      # Configuration and settings
 │   ├───data/        # Data pipelines and providers
@@ -486,6 +503,7 @@ Here is a high-level overview of the project's directory structure:
 │   ├───conftest.py  # Shared fixtures and test configuration
 │   ├───run_all_tests.py # Universal test runner
 │   └───__init__.py  # Test package initialization
+├───cli.py           # Command-line interface entry point
 ├───main.py          # Main entry point for the application
 └───pyproject.toml   # Project metadata and dependencies
 ```

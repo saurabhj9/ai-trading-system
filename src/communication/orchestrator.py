@@ -2,7 +2,8 @@
 Orchestrates the workflow of the trading agents using LangGraph.
 """
 import asyncio
-from datetime import datetime
+import logging
+from datetime import datetime, timedelta
 from typing import Dict, Any, List
 
 from langgraph.graph import StateGraph, END
@@ -15,6 +16,8 @@ from src.agents.technical import TechnicalAnalysisAgent
 from src.config.settings import settings
 from src.data.pipeline import DataPipeline
 from src.llm.batch_client import BatchRequestManager
+
+logger = logging.getLogger(__name__)
 
 
 class AgentState(dict):
@@ -43,6 +46,7 @@ class Orchestrator:
         risk_agent: RiskManagementAgent,
         portfolio_agent: PortfolioManagementAgent,
         state_manager: Any,  # For portfolio state
+        trigger_system: Any = None,  # Optional trigger system for event-driven analysis
     ):
         self.data_pipeline = data_pipeline
         self.technical_agent = technical_agent
@@ -50,6 +54,7 @@ class Orchestrator:
         self.risk_agent = risk_agent
         self.portfolio_agent = portfolio_agent
         self.state_manager = state_manager
+        self.trigger_system = trigger_system
         self.batch_manager = BatchRequestManager(technical_agent.llm_client)
 
         # Track signal generation metrics
@@ -58,6 +63,7 @@ class Orchestrator:
             "local_signal_workflows": 0,
             "llm_signal_workflows": 0,
             "hybrid_workflows": 0,
+            "trigger_driven_workflows": 0,
             "workflow_errors": 0,
         }
 
@@ -222,7 +228,7 @@ class Orchestrator:
             from src.data.symbol_validator import SymbolValidator
             symbol_validator = SymbolValidator()
             is_valid, validation_error = await symbol_validator.validate_symbol(symbol)
-            
+
             if validation_error:
                 return AgentState(error=validation_error.message)
             else:
@@ -302,3 +308,128 @@ class Orchestrator:
         # Reset technical agent metrics
         if hasattr(self.technical_agent, 'reset_performance_metrics'):
             self.technical_agent.reset_performance_metrics()
+
+    async def analyze_symbol(
+        self,
+        symbol: str,
+        trigger_event: Any = None,
+        force_analysis: bool = False
+    ) -> Dict[str, Any]:
+        """
+        Analyze a symbol, optionally triggered by an event.
+
+        Args:
+            symbol: Stock symbol to analyze
+            trigger_event: Optional trigger event that initiated this analysis
+            force_analysis: Force analysis even if recently analyzed
+
+        Returns:
+            Analysis results including decisions and metadata
+        """
+        try:
+            # Update metrics if trigger-driven
+            if trigger_event:
+                self.orchestrator_metrics["trigger_driven_workflows"] += 1
+                logger.info(f"Starting trigger-driven analysis for {symbol}: {trigger_event.trigger_type.value}")
+
+            # Use recent date range for real-time analysis
+            end_date = datetime.now()
+            start_date = end_date - timedelta(days=30)  # 30 days for indicators
+
+            # Check decision cache if not forced
+            if not force_analysis and self.trigger_system:
+                cached_decision = await self.trigger_system.decision_ttl.get_decision(symbol, "full_analysis")
+                if cached_decision:
+                    logger.info(f"Using cached analysis for {symbol}")
+                    return {
+                        'symbol': symbol,
+                        'cached': True,
+                        'decision': cached_decision.decision,
+                        'confidence': cached_decision.confidence,
+                        'timestamp': cached_decision.timestamp.isoformat()
+                    }
+
+            # Run the standard analysis workflow
+            final_state = await self.run(symbol, start_date, end_date)
+
+            if 'error' in final_state:
+                return {
+                    'symbol': symbol,
+                    'error': final_state['error'],
+                    'trigger_info': trigger_event.to_dict() if trigger_event else None
+                }
+
+            # Extract analysis results
+            results = {
+                'symbol': symbol,
+                'timestamp': datetime.now().isoformat(),
+                'trigger_driven': trigger_event is not None,
+                'decisions': {},
+                'final_decision': None,
+                'signal_sources': final_state.get('signal_sources', {}),
+                'performance_metrics': final_state.get('performance_metrics', {})
+            }
+
+            # Extract individual decisions
+            decisions = final_state.get('decisions', {})
+            for agent_name, decision in decisions.items():
+                results['decisions'][agent_name] = {
+                    'action': decision.action,
+                    'confidence': decision.confidence,
+                    'reasoning': decision.reasoning,
+                    'metadata': decision.supporting_data
+                }
+
+            # Extract final decision
+            if 'final_decision' in final_state:
+                final_decision = final_state['final_decision']
+                results['final_decision'] = {
+                    'action': final_decision.action,
+                    'confidence': final_decision.confidence,
+                    'reasoning': final_decision.reasoning
+                }
+
+            # Add trigger information
+            if trigger_event:
+                results['trigger_info'] = {
+                    'type': trigger_event.trigger_type.value,
+                    'severity': trigger_event.severity.value,
+                    'confidence': trigger_event.confidence,
+                    'description': trigger_event.description,
+                    'data': trigger_event.data
+                }
+
+            # Cache the result if trigger system is available
+            if self.trigger_system and 'final_decision' in results:
+                final_action = results['final_decision']['action']
+                final_confidence = results['final_decision']['confidence']
+
+                # Determine decision severity based on action and confidence
+                if final_action in ['STRONG_BUY', 'STRONG_SELL'] or final_confidence >= 0.8:
+                    from src.events.trigger_detector import TriggerSeverity
+                    severity = TriggerSeverity.HIGH
+                else:
+                    severity = TriggerSeverity.MEDIUM
+
+                await self.trigger_system.decision_ttl.cache_decision(
+                    symbol=symbol,
+                    decision_type="full_analysis",
+                    decision=final_action,
+                    severity=severity,
+                    confidence=final_confidence,
+                    metadata={
+                        'trigger_type': trigger_event.trigger_type.value if trigger_event else None,
+                        'decisions': results['decisions'],
+                        'signal_sources': results['signal_sources']
+                    }
+                )
+
+            return results
+
+        except Exception as e:
+            logger.error(f"Error in trigger-driven analysis for {symbol}: {e}")
+            return {
+                'symbol': symbol,
+                'error': str(e),
+                'trigger_info': trigger_event.to_dict() if trigger_event else None
+            }

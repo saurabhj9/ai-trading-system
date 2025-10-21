@@ -74,13 +74,13 @@ Examples:
   %(prog)s AAPL --output report.json         # Save to file
   %(prog)s AAPL --watch --interval 300       # Watch mode (5 min updates)
   %(prog)s --watchlist stocks.txt            # Analyze from file
-  
+
 Verbosity Levels:
   %(prog)s AAPL --verbose=0                  # Silent (errors only)
   %(prog)s AAPL --verbose=1                  # Normal (warnings + errors)
   %(prog)s AAPL --verbose=2                  # Detailed (info + warnings + errors)
   %(prog)s AAPL --verbose=3                  # Debug (full verbose output)
-  
+
 Summary Mode:
   %(prog)s AAPL --summary-only               # Final table only (clean output)
 
@@ -287,20 +287,20 @@ async def main():
 
     # Handle deprecation warnings and argument conflicts
     verbosity_level = args.verbose
-    
+
     # Handle --quiet flag overriding verbosity
     if args.quiet:
         verbosity_level = 0
-    # Handle --summary-only flag 
+    # Handle --summary-only flag
     summary_only_mode = args.summary_only
     if summary_only_mode:
         verbosity_level = 1  # Use normal verbosity level, control display separately
-    
+
     # Handle --detailed deprecation
     if args.detailed and not summary_only_mode:
         formatter.print_warning("Warning: --detailed is deprecated. Use --verbose=2 instead.")
         verbosity_level = 2
-    
+
     # Configure logging based on verbosity
     # Handle summary-only mode with special logging
     if summary_only_mode:
@@ -358,7 +358,7 @@ async def main():
     try:
         # Set quiet mode for silent (0) or summary-only (4) modes
         is_quiet = verbosity_level == 0 or summary_only_mode
-        
+
         if len(symbols) == 1:
             results = [await analyze_single(analyzer, symbols[0], args.days, is_quiet)]
         else:

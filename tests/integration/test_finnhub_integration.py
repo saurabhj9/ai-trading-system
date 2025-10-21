@@ -74,7 +74,7 @@ class TestFinnhubIntegration:
     async def test_real_multiple_quotes(self, provider):
         """Test fetching multiple real quotes in parallel."""
         symbols = ["AAPL", "MSFT"]
-        
+
         result = await provider.get_multiple_quotes(symbols)
 
         assert isinstance(result, dict)

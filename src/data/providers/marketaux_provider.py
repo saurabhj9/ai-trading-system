@@ -26,7 +26,7 @@ class MarketauxProvider(BaseDataProvider):
     def __init__(self, api_key: str, rate_limit: int = 100, period: float = 86400.0):
         """
         Initialize the Marketaux provider.
-        
+
         Args:
             api_key: Marketaux API key
             rate_limit: Number of requests allowed per period (default: 100 for free tier)
@@ -44,7 +44,7 @@ class MarketauxProvider(BaseDataProvider):
     ) -> Optional[pd.DataFrame]:
         """
         Fetches historical market data from Marketaux.
-        
+
         Note: Marketaux is primarily a news API, so this is a basic implementation
         that returns minimal OHLCV data. For comprehensive historical data,
         consider using another provider like Alpha Vantage or YFinance.
@@ -57,7 +57,7 @@ class MarketauxProvider(BaseDataProvider):
     async def get_current_price(self, symbol: str) -> Optional[float]:
         """
         Fetches the current market price from Marketaux.
-        
+
         Note: Marketaux is primarily a news API, so this is a basic implementation
         that attempts to extract price information from news articles.
         For accurate current prices, consider using another provider.
@@ -83,7 +83,7 @@ class MarketauxProvider(BaseDataProvider):
             "symbols": symbol,
             "limit": str(limit),
         }
-        
+
         try:
             async with self.throttler, aiohttp.ClientSession() as session:
                 async with session.get(self.base_url, params=params) as response:
@@ -115,7 +115,7 @@ class MarketauxProvider(BaseDataProvider):
                         }]
                     }
                     transformed_articles.append(transformed_article)
-                
+
                 return transformed_articles
             else:
                 # Handle error cases
@@ -149,16 +149,16 @@ class MarketauxProvider(BaseDataProvider):
     def _convert_sentiment_score(self, sentiment: str) -> float:
         """
         Convert Marketaux sentiment string to numeric score.
-        
+
         Args:
             sentiment: Sentiment string from Marketaux (e.g., "positive", "negative", "neutral")
-            
+
         Returns:
             Numeric sentiment score compatible with Alpha Vantage format
         """
         if not sentiment:
             return 0.0
-        
+
         sentiment_lower = sentiment.lower()
         if sentiment_lower == "positive":
             return 0.5
@@ -173,16 +173,16 @@ class MarketauxProvider(BaseDataProvider):
     def _convert_sentiment_label(self, sentiment: str) -> str:
         """
         Convert Marketaux sentiment string to Alpha Vantage compatible label.
-        
+
         Args:
             sentiment: Sentiment string from Marketaux
-            
+
         Returns:
             Sentiment label compatible with Alpha Vantage format
         """
         if not sentiment:
             return "Neutral"
-        
+
         sentiment_lower = sentiment.lower()
         if sentiment_lower == "positive":
             return "Positive"

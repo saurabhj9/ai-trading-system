@@ -127,10 +127,10 @@ class TestCompositeNewsProvider:
         """Test successful news fetch from Alpha Vantage without fallback."""
         # Setup
         mock_alpha_vantage_provider.fetch_news_sentiment.return_value = sample_alpha_vantage_news
-        
+
         # Execute
         result = await composite_provider.fetch_news_sentiment("AAPL", 10)
-        
+
         # Verify
         assert result == sample_alpha_vantage_news
         mock_alpha_vantage_provider.fetch_news_sentiment.assert_called_once_with("AAPL", 10)
@@ -144,10 +144,10 @@ class TestCompositeNewsProvider:
         # Setup
         mock_alpha_vantage_provider.fetch_news_sentiment.side_effect = Exception("HTTP Error")
         mock_marketaux_provider.fetch_news_sentiment.return_value = sample_marketaux_news
-        
+
         # Execute
         result = await composite_provider.fetch_news_sentiment("AAPL", 10)
-        
+
         # Verify
         assert result == sample_marketaux_news
         mock_alpha_vantage_provider.fetch_news_sentiment.assert_called_once_with("AAPL", 10)
@@ -161,10 +161,10 @@ class TestCompositeNewsProvider:
         # Setup
         mock_alpha_vantage_provider.fetch_news_sentiment.return_value = []
         mock_marketaux_provider.fetch_news_sentiment.return_value = sample_marketaux_news
-        
+
         # Execute
         result = await composite_provider.fetch_news_sentiment("AAPL", 10)
-        
+
         # Verify
         assert result == sample_marketaux_news
         mock_alpha_vantage_provider.fetch_news_sentiment.assert_called_once_with("AAPL", 10)
@@ -178,10 +178,10 @@ class TestCompositeNewsProvider:
         # Setup
         mock_alpha_vantage_provider.fetch_news_sentiment.return_value = None
         mock_marketaux_provider.fetch_news_sentiment.return_value = sample_marketaux_news
-        
+
         # Execute
         result = await composite_provider.fetch_news_sentiment("AAPL", 10)
-        
+
         # Verify
         assert result == sample_marketaux_news
         mock_alpha_vantage_provider.fetch_news_sentiment.assert_called_once_with("AAPL", 10)
@@ -195,10 +195,10 @@ class TestCompositeNewsProvider:
         # Setup
         mock_alpha_vantage_provider.fetch_news_sentiment.side_effect = Exception("Alpha Vantage Error")
         mock_marketaux_provider.fetch_news_sentiment.side_effect = Exception("Marketaux Error")
-        
+
         # Execute
         result = await composite_provider.fetch_news_sentiment("AAPL", 10)
-        
+
         # Verify
         assert result is None
         mock_alpha_vantage_provider.fetch_news_sentiment.assert_called_once_with("AAPL", 10)
@@ -212,10 +212,10 @@ class TestCompositeNewsProvider:
         # Setup
         mock_alpha_vantage_provider.fetch_news_sentiment.return_value = []
         mock_marketaux_provider.fetch_news_sentiment.return_value = []
-        
+
         # Execute
         result = await composite_provider.fetch_news_sentiment("AAPL", 10)
-        
+
         # Verify
         assert result is None
         mock_alpha_vantage_provider.fetch_news_sentiment.assert_called_once_with("AAPL", 10)
@@ -229,10 +229,10 @@ class TestCompositeNewsProvider:
         # Setup
         mock_alpha_vantage_provider.fetch_news_sentiment.return_value = None
         mock_marketaux_provider.fetch_news_sentiment.return_value = None
-        
+
         # Execute
         result = await composite_provider.fetch_news_sentiment("AAPL", 10)
-        
+
         # Verify
         assert result is None
         mock_alpha_vantage_provider.fetch_news_sentiment.assert_called_once_with("AAPL", 10)
@@ -246,10 +246,10 @@ class TestCompositeNewsProvider:
         # Setup
         mock_alpha_vantage_provider.fetch_news_sentiment.side_effect = Exception("Alpha Vantage Error")
         mock_marketaux_provider.fetch_news_sentiment.return_value = sample_marketaux_news
-        
+
         # Execute
         result = await composite_provider.fetch_news_sentiment("MSFT", 15)
-        
+
         # Verify
         assert result == sample_marketaux_news
         mock_alpha_vantage_provider.fetch_news_sentiment.assert_called_once_with("MSFT", 15)
@@ -265,10 +265,10 @@ class TestCompositeNewsProvider:
         end_date = datetime(2023, 1, 31)
         mock_df = MagicMock()
         mock_alpha_vantage_provider.fetch_data.return_value = mock_df
-        
+
         # Execute
         result = await composite_provider.fetch_data("AAPL", start_date, end_date)
-        
+
         # Verify
         assert result == mock_df
         mock_alpha_vantage_provider.fetch_data.assert_called_once_with("AAPL", start_date, end_date)
@@ -281,10 +281,10 @@ class TestCompositeNewsProvider:
         """Test that get_current_price only uses Alpha Vantage."""
         # Setup
         mock_alpha_vantage_provider.get_current_price.return_value = 150.25
-        
+
         # Execute
         result = await composite_provider.get_current_price("AAPL")
-        
+
         # Verify
         assert result == 150.25
         mock_alpha_vantage_provider.get_current_price.assert_called_once_with("AAPL")
@@ -297,11 +297,11 @@ class TestCompositeNewsProvider:
         """Test that successful Alpha Vantage fetch is logged correctly."""
         # Setup
         mock_alpha_vantage_provider.fetch_news_sentiment.return_value = sample_alpha_vantage_news
-        
+
         with patch.object(composite_provider.logger, 'info') as mock_logger_info:
             # Execute
             await composite_provider.fetch_news_sentiment("AAPL", 10)
-            
+
             # Verify
             mock_logger_info.assert_any_call("Fetching news sentiment for AAPL using Alpha Vantage")
             mock_logger_info.assert_any_call(f"Successfully fetched {len(sample_alpha_vantage_news)} news articles from Alpha Vantage for AAPL")
@@ -314,13 +314,13 @@ class TestCompositeNewsProvider:
         # Setup
         mock_alpha_vantage_provider.fetch_news_sentiment.return_value = []
         mock_marketaux_provider.fetch_news_sentiment.return_value = None
-        
+
         with patch.object(composite_provider.logger, 'warning') as mock_logger_warning, \
              patch.object(composite_provider.logger, 'info') as mock_logger_info:
-            
+
             # Execute
             await composite_provider.fetch_news_sentiment("AAPL", 10)
-            
+
             # Verify
             mock_logger_warning.assert_any_call("Alpha Vantage returned no news for AAPL, falling back to Marketaux")
             mock_logger_info.assert_any_call("Fetching news sentiment for AAPL using Alpha Vantage")
@@ -334,13 +334,13 @@ class TestCompositeNewsProvider:
         # Setup
         mock_alpha_vantage_provider.fetch_news_sentiment.side_effect = Exception("Connection Error")
         mock_marketaux_provider.fetch_news_sentiment.return_value = None
-        
+
         with patch.object(composite_provider.logger, 'warning') as mock_logger_warning, \
              patch.object(composite_provider.logger, 'info') as mock_logger_info:
-            
+
             # Execute
             await composite_provider.fetch_news_sentiment("AAPL", 10)
-            
+
             # Verify
             mock_logger_warning.assert_any_call("Alpha Vantage failed for AAPL with error: Connection Error, falling back to Marketaux")
             mock_logger_info.assert_any_call("Fetching news sentiment for AAPL using Alpha Vantage")
@@ -354,14 +354,14 @@ class TestCompositeNewsProvider:
         # Setup
         mock_alpha_vantage_provider.fetch_news_sentiment.side_effect = Exception("Alpha Vantage Error")
         mock_marketaux_provider.fetch_news_sentiment.side_effect = Exception("Marketaux Error")
-        
+
         with patch.object(composite_provider.logger, 'error') as mock_logger_error, \
              patch.object(composite_provider.logger, 'warning') as mock_logger_warning, \
              patch.object(composite_provider.logger, 'info') as mock_logger_info:
-            
+
             # Execute
             await composite_provider.fetch_news_sentiment("AAPL", 10)
-            
+
             # Verify
             mock_logger_error.assert_any_call("Both Alpha Vantage and Marketaux failed for AAPL. Marketaux error: Marketaux Error")
             mock_logger_warning.assert_any_call("Alpha Vantage failed for AAPL with error: Alpha Vantage Error, falling back to Marketaux")
@@ -375,14 +375,14 @@ class TestCompositeNewsProvider:
         """Test that Alpha Vantage data format is preserved correctly."""
         # Setup
         mock_alpha_vantage_provider.fetch_news_sentiment.return_value = sample_alpha_vantage_news
-        
+
         # Execute
         result = await composite_provider.fetch_news_sentiment("AAPL", 10)
-        
+
         # Verify
         assert result is not None
         assert len(result) == 2
-        
+
         # Check first article
         article = result[0]
         assert "title" in article
@@ -398,7 +398,7 @@ class TestCompositeNewsProvider:
         assert "overall_sentiment_score" in article
         assert "overall_sentiment_label" in article
         assert "ticker_sentiment" in article
-        
+
         # Check ticker sentiment structure
         ticker_sentiment = article["ticker_sentiment"][0]
         assert "ticker" in ticker_sentiment
@@ -414,14 +414,14 @@ class TestCompositeNewsProvider:
         # Setup
         mock_alpha_vantage_provider.fetch_news_sentiment.side_effect = Exception("Alpha Vantage Error")
         mock_marketaux_provider.fetch_news_sentiment.return_value = sample_marketaux_news
-        
+
         # Execute
         result = await composite_provider.fetch_news_sentiment("AAPL", 10)
-        
+
         # Verify
         assert result is not None
         assert len(result) == 1
-        
+
         # Check article structure
         article = result[0]
         assert "title" in article
@@ -437,7 +437,7 @@ class TestCompositeNewsProvider:
         assert "overall_sentiment_score" in article
         assert "overall_sentiment_label" in article
         assert "ticker_sentiment" in article
-        
+
         # Check ticker sentiment structure
         ticker_sentiment = article["ticker_sentiment"][0]
         assert "ticker" in ticker_sentiment
